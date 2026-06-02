@@ -1,0 +1,45 @@
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const QRCode = require('qrcode');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
+
+router.post('/inscription', async (req, res) => {
+  try {
+    const { nom, prenom, telephone, email, motDePasse } = req.body;
+    const existant = await User.findOne({ telephone });
+    if (existant) {
+      return res.status(400).json({ message: 'Ce numéro existe déjà' });
+    }
+    const hash = await bcrypt.hash(motDePasse, 10);
+    const user = new User({ nom, prenom, telephone, email, motDePasse: hash });
+    await user.save();
+    const qrData = JSON.stringify({ id: user._id, nom, prenom, telephone });
+    const qrCode = await QRCode.toDataURL(qrData);
+    user.qrCode = qrCode;
+    await user.save();
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ message: 'Inscription réussie', token, user: { nom, prenom, telephone, qrCode } });
+  } catch (err) {
+    console.log('ERREUR INSCRIPTION:', err.message);
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+router.post('/connexion', async (req, res) => {
+  try {
+    const { telephone, motDePasse } = req.body;
+    const user = await User.findOne({ telephone });
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    const valide = await user.verifierMotDePasse(motDePasse);
+    if (!valide) return res.status(401).json({ message: 'Mot de passe incorrect' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ message: 'Connexion réussie', token, user: { nom: user.nom, prenom: user.prenom, role: user.role, qrCode: user.qrCode } });
+  } catch (err) {
+    console.log('ERREUR CONNEXION:', err.message);
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+module.exports = router;

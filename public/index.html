@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIOSAVEUR - Poulet Molo Molo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    
+    header {
+      background: #2e7d32;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 28px; }
+    header p { font-size: 14px; margin-top: 5px; }
+
+    .container { max-width: 500px; margin: 30px auto; padding: 20px; }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 { color: #2e7d32; margin-bottom: 15px; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #1b5e20; }
+
+    .message {
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    .success { background: #e8f5e9; color: #2e7d32; }
+    .error { background: #ffebee; color: #c62828; }
+
+    .qr-container { text-align: center; margin-top: 15px; }
+    .qr-container img { max-width: 200px; border: 2px solid #2e7d32; border-radius: 8px; }
+
+    .tabs { display: flex; margin-bottom: 20px; }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      background: #ddd;
+      cursor: pointer;
+      border-radius: 8px 0 0 8px;
+    }
+    .tab:last-child { border-radius: 0 8px 8px 0; }
+    .tab.active { background: #2e7d32; color: white; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🐔 BIOSAVEUR</h1>
+  <p>Poulet Molo Molo — Vous Savez Ce Que Vous Mangez</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" onclick="afficherTab('inscription')">Inscription</div>
+    <div class="tab" onclick="afficherTab('connexion')">Connexion</div>
+  </div>
+
+  <!-- Inscription -->
+  <div id="tab-inscription" class="card">
+    <h2>Créer un compte</h2>
+    <input type="text" id="nom" placeholder="Nom">
+    <input type="text" id="prenom" placeholder="Prénom">
+    <input type="tel" id="telephone" placeholder="Téléphone (ex: 0707000000)">
+    <input type="email" id="email" placeholder="Email (optionnel)">
+    <input type="password" id="motDePasse" placeholder="Mot de passe">
+    <button onclick="inscrire()">S'inscrire</button>
+    <div id="msg-inscription" class="message"></div>
+    <div id="qr-inscription" class="qr-container"></div>
+  </div>
+
+  <!-- Connexion -->
+  <div id="tab-connexion" class="card" style="display:none">
+    <h2>Se connecter</h2>
+    <input type="tel" id="tel-connexion" placeholder="Téléphone">
+    <input type="password" id="mdp-connexion" placeholder="Mot de passe">
+    <button onclick="connecter()">Se connecter</button>
+    <div id="msg-connexion" class="message"></div>
+  </div>
+
+</div>
+
+<script>
+  function afficherTab(tab) {
+    document.getElementById('tab-inscription').style.display = tab === 'inscription' ? 'block' : 'none';
+    document.getElementById('tab-connexion').style.display = tab === 'connexion' ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (tab === 'inscription' && i === 0) || (tab === 'connexion' && i === 1));
+    });
+  }
+
+  async function inscrire() {
+    const nom = document.getElementById('nom').value;
+    const prenom = document.getElementById('prenom').value;
+    const telephone = document.getElementById('telephone').value;
+    const email = document.getElementById('email').value;
+    const motDePasse = document.getElementById('motDePasse').value;
+
+    const msg = document.getElementById('msg-inscription');
+    const qrDiv = document.getElementById('qr-inscription');
+
+    try {
+      const res = await fetch('/api/auth/inscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom, prenom, telephone, email, motDePasse })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.className = 'message success';
+        msg.textContent = 'Inscription réussie ! Bienvenue ' + data.user.nom;
+        msg.style.display = 'block';
+        localStorage.setItem('token', data.token);
+        if (data.user.qrCode) {
+          qrDiv.innerHTML = '<p>Votre QR Code client :</p><img src="' + data.user.qrCode + '">';
+        }
+      } else {
+        msg.className = 'message error';
+        msg.textContent = data.message;
+        msg.style.display = 'block';
+      }
+    } catch (err) {
+      msg.className = 'message error';
+      msg.textContent = 'Erreur de connexion au serveur';
+      msg.style.display = 'block';
+    }
+  }
+
+  async function connecter() {
+    const telephone = document.getElementById('tel-connexion').value;
+    const motDePasse = document.getElementById('mdp-connexion').value;
+    const msg = document.getElementById('msg-connexion');
+
+    try {
+      const res = await fetch('/api/auth/connexion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, motDePasse })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.className = 'message success';
+        msg.textContent = 'Bienvenue ' + data.user.nom + ' !';
+        msg.style.display = 'block';
+        localStorage.setItem('token', data.token);
+      } else {
+        msg.className = 'message error';
+        msg.textContent = data.message;
+        msg.style.display = 'block';
+      }
+    } catch (err) {
+      msg.className = 'message error';
+      msg.textContent = 'Erreur de connexion au serveur';
+      msg.style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>
