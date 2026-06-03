@@ -113,6 +113,16 @@
 
 <div class="section">
   <h3>👥 Liste des Clients</h3>
+      <button class="btn btn-green" style="margin-bottom:15px" onclick="afficherFormulaireClient()">+ Ajouter un client</button>
+      <div id="form-nouveau-client" style="display:none; background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:20px">
+        <h4 style="margin-bottom:15px; color:#2e7d32">Nouveau Client</h4>
+        <input type="text" id="new-nom" placeholder="Nom" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px">
+        <input type="text" id="new-prenom" placeholder="Prénom" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px">
+        <input type="tel" id="new-tel" placeholder="Téléphone" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px">
+        <input type="password" id="new-mdp" placeholder="Mot de passe" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px">
+        <button class="btn btn-green" onclick="ajouterClient()">Enregistrer</button>
+        <button class="btn btn-red" style="margin-left:10px" onclick="document.getElementById('form-nouveau-client').style.display='none'">Annuler</button>
+      </div>
   <table>
     <thead>
       <tr>
@@ -187,6 +197,32 @@
 
   function fermerQR() {
     document.getElementById('qr-modal').classList.remove('active');
+  }
+
+  function afficherFormulaireClient() {
+    const form = document.getElementById("form-nouveau-client");
+    form.style.display = form.style.display === "none" ? "block" : "none";
+  }
+
+  async function ajouterClient() {
+    const nom = document.getElementById("new-nom").value;
+    const prenom = document.getElementById("new-prenom").value;
+    const telephone = document.getElementById("new-tel").value;
+    const motDePasse = document.getElementById("new-mdp").value;
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/auth/inscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ nom, prenom, telephone, motDePasse })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Client ajouté avec succès !");
+      document.getElementById("form-nouveau-client").style.display = "none";
+      chargerClients();
+    } else {
+      alert("Erreur : " + data.message);
+    }
   }
 
   function deconnexion() {
