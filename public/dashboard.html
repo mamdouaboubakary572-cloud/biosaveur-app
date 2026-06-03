@@ -220,6 +220,8 @@
       alert("Client ajouté avec succès !");
       document.getElementById("form-nouveau-client").style.display = "none";
       chargerClients();
+  chargerCotisations();
+  remplirSelectClients();
     } else {
       alert("Erreur : " + data.message);
     }
@@ -231,6 +233,8 @@
   }
 
   chargerClients();
+  chargerCotisations();
+  remplirSelectClients();
 </script>
 
 <section id="section-cotisations" style="margin:20px">
@@ -248,4 +252,57 @@
 <div id="liste-cotisations"></div>
 </section>
 </body>
-</html>
+</html><script>
+function afficherFormCotisation() {
+  const form = document.getElementById("form-cotisation");
+  form.style.display = form.style.display === "none" ? "block" : "none";
+}
+
+async function remplirSelectClients() {
+  const token = localStorage.getItem("token");
+  const res = await fetch("/api/admin/clients", { headers: { "Authorization": "Bearer " + token } });
+  const data = await res.json();
+  const select = document.getElementById("cot-client");
+  if (select) data.forEach(c => { select.innerHTML += "<option value='" + c._id + "'>" + c.nom + " " + c.prenom + "</option>"; });
+}
+
+async function chargerCotisations() {
+  const token = localStorage.getItem("token");
+  const res = await fetch("/api/cotisations", { headers: { "Authorization": "Bearer " + token } });
+  const data = await res.json();
+  const div = document.getElementById("liste-cotisations");
+  if (!div) return;
+  if (!data.length) { div.innerHTML = "<p style='color:#888;margin-top:10px'>Aucune cotisation.</p>"; return; }
+  let html = "<table style='width:100%;border-collapse:collapse;margin-top:15px'><tr style='background:#2e7d32;color:white'><th style='padding:10px;text-align:left'>Client</th><th style='padding:10px'>Mois</th><th style='padding:10px'>Objectif</th><th style='padding:10px'>Collecté</th><th style='padding:10px'>Statut</th><th style='padding:10px'>Action</th></tr>";
+  data.forEach(c => {
+    const pct = Math.round((c.montantCollecte / c.montantObjectif) * 100);
+    html += "<tr style='border-bottom:1px solid #eee'><td style='padding:10px'>" + c.client.nom + " " + c.client.prenom + "</td><td style='padding:10px;text-align:center'>" + c.mois + "</td><td style='padding:10px;text-align:center'>" + c.montantObjectif + " FCFA</td><td style='padding:10px;text-align:center'>" + c.montantCollecte + " FCFA (" + pct + "%)</td><td style='padding:10px;text-align:center'><span style='background:" + (c.statut==="complete"?"#2e7d32":c.statut==="livre"?"#1565c0":"#f57c00") + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + c.statut + "</span></td><td style='padding:10px;text-align:center'><button class='btn btn-green' style='font-size:12px;padding:5px 10px' onclick='ajouterVersement(\"" + c._id + "\")'>+ Versement</button></td></tr>";
+  });
+  html += "</table>";
+  div.innerHTML = html;
+}
+
+async function creerCotisation() {
+  const token = localStorage.getItem("token");
+  const clientId = document.getElementById("cot-client").value;
+  const objectifPoulets = parseInt(document.getElementById("cot-poulets").value);
+  const prixUnitaire = parseInt(document.getElementById("cot-prix").value) || 2800;
+  const mois = document.getElementById("cot-mois").value;
+  if (!clientId || !objectifPoulets || !mois) { alert("Remplissez tous les champs"); return; }
+  const res = await fetch("/api/cotisations", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ clientId, objectifPoulets, prixUnitaire, mois }) });
+  const data = await res.json();
+  if (res.ok) { alert("Cotisation créée !"); document.getElementById("form-cotisation").style.display = "none"; chargerCotisations(); }
+  else { alert("Erreur: " + data.message); }
+}
+
+async function ajouterVersement(cotisationId) {
+  const montant = prompt("Montant du versement (FCFA):");
+  const modePaiement = prompt("Mode de paiement (Wave/Orange Money/Moov Money):");
+  if (!montant) return;
+  const token = localStorage.getItem("token");
+  const res = await fetch("/api/cotisations/" + cotisationId + "/versement", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ montant: parseInt(montant), modePaiement }) });
+  const data = await res.json();
+  if (res.ok) { alert("Versement enregistré !"); chargerCotisations(); }
+  else { alert("Erreur: " + data.message); }
+}
+</script>
