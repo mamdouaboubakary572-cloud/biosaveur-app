@@ -1,0 +1,20 @@
+const mongoose = require('mongoose');
+
+const versementSchema = new mongoose.Schema({
+  montant: Number,
+  date: { type: Date, default: Date.now },
+  modePaiement: { type: String, default: 'Wave' }
+});
+
+const cotisationSchema = new mongoose.Schema({
+  client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  mois: { type: String, required: true },
+  objectifPoulets: { type: Number, required: true },
+  prixUnitaire: { type: Number, default: 2800 },
+  montantObjectif: Number,
+  montantCollecte: { type: Number, default: 0 },
+  versements: [versementSchema],
+  statut: { type: String, enum: ['en_cours', 'complete', 'livre'], default: 'en_cours' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Cotisation', cotisationSchema);
