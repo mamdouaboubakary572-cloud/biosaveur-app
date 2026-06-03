@@ -233,5 +233,19 @@
   chargerClients();
 </script>
 
+<section id="section-cotisations" style="margin:20px">
+<h3 style="color:#2e7d32;margin-bottom:15px">💰 Cotisations Poulet Molo Molo</h3>
+<button class="btn btn-green" style="margin-bottom:15px" onclick="afficherFormCotisation()">+ Nouvelle cotisation</button>
+<div id="form-cotisation" style="display:none;background:#f9f9f9;padding:20px;border-radius:8px;margin-bottom:20px">
+<h4 style="margin-bottom:15px;color:#2e7d32">Créer une cotisation</h4>
+<select id="cot-client" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:5px"><option value="">-- Choisir un client --</option></select>
+<input type="number" id="cot-poulets" placeholder="Nombre de poulets souhaités" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:5px">
+<input type="number" id="cot-prix" placeholder="Prix unitaire (défaut: 2800 FCFA)" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:5px">
+<input type="month" id="cot-mois" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:5px">
+<button class="btn btn-green" onclick="creerCotisation()">Créer</button>
+<button class="btn btn-red" style="margin-left:10px" onclick="document.getElementById('form-cotisation').style.display='none'">Annuler</button>
+</div>
+<div id="liste-cotisations"></div>
+</section>
 </body>
 </html>
