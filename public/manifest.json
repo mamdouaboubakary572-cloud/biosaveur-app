@@ -1,0 +1,21 @@
+{
+  "name": "BIOSAVEUR - Poulet Molo Molo",
+  "short_name": "BIOSAVEUR",
+  "description": "Vous Savez Ce Que Vous Mangez",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/2e7d32/ffffff?text=BSV",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/2e7d32/ffffff?text=BSV",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
