@@ -147,7 +147,7 @@
         msg.textContent = 'Inscription réussie ! Bienvenue ' + data.user.nom;
         msg.style.display = 'block';
         localStorage.setItem('token', data.token);
-        window.location.href = '/dashboard.html';
+        if (data.user window.location.href = '/dashboard.html';window.location.href = '/dashboard.html'; data.user.role === 'admin') { window.location.href = '/dashboard.html'; } else { window.location.href = '/client.html'; }
         if (data.user.qrCode) {
           qrDiv.innerHTML = '<p>Votre QR Code client :</p><img src="' + data.user.qrCode + '">';
         }
@@ -181,7 +181,7 @@
         msg.textContent = 'Bienvenue ' + data.user.nom + ' !';
         msg.style.display = 'block';
         localStorage.setItem('token', data.token);
-        window.location.href = '/dashboard.html';
+        if (data.user window.location.href = '/dashboard.html';window.location.href = '/dashboard.html'; data.user.role === 'admin') { window.location.href = '/dashboard.html'; } else { window.location.href = '/client.html'; }
       } else {
         msg.className = 'message error';
         msg.textContent = data.message;
