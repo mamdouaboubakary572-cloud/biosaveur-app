@@ -9,78 +9,114 @@
 body { font-family: Arial, sans-serif; background: #f5f5f5; }
 header { background: #2e7d32; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
 header h1 { font-size: 20px; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; }
+.logout { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; }
 .stat-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.stat-card h2 { font-size: 36px; color: #2e7d32; }
-.stat-card p { color: #666; margin-top: 5px; }
-.section { margin: 0 20px 20px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.stat-card h2 { font-size: 30px; color: #2e7d32; }
+.stat-card p { color: #666; margin-top: 5px; font-size: 13px; }
+.tabs { display: flex; gap: 5px; padding: 0 20px 15px; flex-wrap: wrap; }
+.tab-btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; background: #e8f5e9; color: #2e7d32; font-size: 13px; font-weight: bold; }
+.tab-btn.active { background: #2e7d32; color: white; }
+.section { margin: 0 20px 20px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
+.section.active { display: block; }
 .section h3 { color: #2e7d32; margin-bottom: 15px; font-size: 18px; }
 table { width: 100%; border-collapse: collapse; }
-th { background: #2e7d32; color: white; padding: 10px; text-align: left; }
-td { padding: 10px; border-bottom: 1px solid #eee; }
+th { background: #2e7d32; color: white; padding: 10px; text-align: left; font-size: 13px; }
+td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 tr:hover { background: #f9f9f9; }
-.btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+.btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; }
 .btn-green { background: #2e7d32; color: white; }
 .btn-red { background: #c62828; color: white; }
-.badge { padding: 3px 8px; border-radius: 5px; font-size: 12px; }
-.badge-client { background: #e8f5e9; color: #2e7d32; }
+.btn-blue { background: #1565c0; color: white; }
+.btn-orange { background: #f57c00; color: white; }
 .form-box { display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0; }
 .form-box h4 { color: #2e7d32; margin-bottom: 15px; }
-input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-.logout { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-.progress-bar { background: #eee; border-radius: 10px; height: 10px; margin-top: 5px; }
-.progress-fill { background: #2e7d32; border-radius: 10px; height: 10px; }
+input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+textarea { height: 80px; }
+.badge { padding: 3px 8px; border-radius: 5px; font-size: 12px; }
+.progress-bar { background: #eee; border-radius: 10px; height: 8px; }
+.progress-fill { background: #2e7d32; border-radius: 10px; height: 8px; }
+.message-item { padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #f9f9f9; border-left: 4px solid #2e7d32; }
+.notif { background: #c62828; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; margin-left: 5px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>🐔 BIOSAVEUR — Tableau de Bord</h1>
+  <h1>🐔 BIOSAVEUR — Tableau de Bord Admin</h1>
   <button class="logout" onclick="deconnexion()">Déconnexion</button>
 </header>
 
 <div class="stats">
   <div class="stat-card"><h2 id="total-clients">0</h2><p>Clients inscrits</p></div>
-  <div class="stat-card"><h2 id="total-commandes">0</h2><p>Commandes</p></div>
-  <div class="stat-card"><h2 id="total-livraisons">0</h2><p>Livraisons effectuées</p></div>
+  <div class="stat-card"><h2 id="total-cotisations">0</h2><p>Cotisations actives</p></div>
+  <div class="stat-card"><h2 id="total-collecte">0</h2><p>FCFA collectés</p></div>
+  <div class="stat-card"><h2 id="total-messages">0</h2><p>Messages non lus</p></div>
 </div>
 
-<div class="section">
-  <h3>👥 Liste des Clients</h3>
-  <button class="btn btn-green" style="margin-bottom:15px" onclick="afficherFormClient()">+ Ajouter un client</button>
+<div class="tabs">
+  <button class="tab-btn active" onclick="afficherTab('clients')">👥 Clients</button>
+  <button class="tab-btn" onclick="afficherTab('cotisations')">💰 Cotisations</button>
+  <button class="tab-btn" onclick="afficherTab('livraisons')">🚚 Livraisons</button>
+  <button class="tab-btn" onclick="afficherTab('messages')">✉️ Messages <span class="notif" id="notif-messages">0</span></button>
+</div>
+
+<!-- CLIENTS -->
+<div class="section active" id="section-clients">
+  <h3>👥 Gestion des Clients</h3>
+  <button class="btn btn-green" style="margin-bottom:15px" onclick="toggleForm('form-client')">+ Ajouter un client</button>
   <div class="form-box" id="form-client">
     <h4>Nouveau Client</h4>
     <input type="text" id="new-nom" placeholder="Nom">
     <input type="text" id="new-prenom" placeholder="Prénom">
     <input type="tel" id="new-tel" placeholder="Téléphone">
-    <input type="password" id="new-mdp" placeholder="Mot de passe">
+    <input type="password" id="new-mdp" placeholder="Mot de passe temporaire">
     <button class="btn btn-green" onclick="ajouterClient()">Enregistrer</button>
-    <button class="btn btn-red" style="margin-left:10px" onclick="fermerForm('form-client')">Annuler</button>
+    <button class="btn btn-red" style="margin-left:10px" onclick="toggleForm('form-client')">Annuler</button>
   </div>
   <table>
-    <thead><tr><th>Nom</th><th>Prénom</th><th>Téléphone</th><th>Rôle</th><th>QR Code</th></tr></thead>
+    <thead><tr><th>Nom</th><th>Prénom</th><th>Téléphone</th><th>Inscription</th><th>QR Code</th></tr></thead>
     <tbody id="clients-table"></tbody>
   </table>
 </div>
 
-<div class="section">
-  <h3>💰 Cotisations Poulet Molo Molo</h3>
-  <button class="btn btn-green" style="margin-bottom:15px" onclick="afficherFormCotisation()">+ Nouvelle cotisation</button>
+<!-- COTISATIONS -->
+<div class="section" id="section-cotisations">
+  <h3>💰 Gestion des Cotisations</h3>
+  <button class="btn btn-green" style="margin-bottom:15px" onclick="toggleForm('form-cotisation')">+ Nouvelle cotisation</button>
   <div class="form-box" id="form-cotisation">
     <h4>Créer une cotisation</h4>
     <select id="cot-client"><option value="">-- Choisir un client --</option></select>
-    <input type="number" id="cot-poulets" placeholder="Nombre de poulets souhaités">
+    <input type="number" id="cot-poulets" placeholder="Nombre de poulets">
     <input type="number" id="cot-prix" placeholder="Prix unitaire (défaut: 2800 FCFA)">
     <input type="month" id="cot-mois">
     <button class="btn btn-green" onclick="creerCotisation()">Créer</button>
-    <button class="btn btn-red" style="margin-left:10px" onclick="fermerForm('form-cotisation')">Annuler</button>
+    <button class="btn btn-red" style="margin-left:10px" onclick="toggleForm('form-cotisation')">Annuler</button>
   </div>
-  <div id="liste-cotisations"></div>
+  <table>
+    <thead><tr><th>Client</th><th>Mois</th><th>Objectif</th><th>Collecté</th><th>Progression</th><th>Livraison</th><th>Statut</th><th>Actions</th></tr></thead>
+    <tbody id="cotisations-table"></tbody>
+  </table>
+</div>
+
+<!-- LIVRAISONS -->
+<div class="section" id="section-livraisons">
+  <h3>🚚 Suivi des Livraisons</h3>
+  <table>
+    <thead><tr><th>Client</th><th>Mois</th><th>Poulets</th><th>Jour choisi</th><th>Statut</th><th>Action</th></tr></thead>
+    <tbody id="livraisons-table"></tbody>
+  </table>
+</div>
+
+<!-- MESSAGES -->
+<div class="section" id="section-messages">
+  <h3>✉️ Messages des Clients</h3>
+  <div id="messages-container"></div>
 </div>
 
 <div id="modal-qr" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center">
   <div style="background:white;padding:30px;border-radius:10px;text-align:center">
     <div id="qr-content"></div>
-    <button class="btn btn-red" style="margin-top:15px" onclick="fermerQR()">Fermer</button>
+    <button class="btn btn-red" style="margin-top:15px" onclick="document.getElementById('modal-qr').style.display='none'">Fermer</button>
   </div>
 </div>
 
@@ -88,25 +124,36 @@ input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px sol
 const token = localStorage.getItem("token");
 if (!token) window.location.href = "/";
 
-function fermerForm(id) { document.getElementById(id).style.display = "none"; }
-function afficherFormClient() { const f = document.getElementById("form-client"); f.style.display = f.style.display === "none" ? "block" : "none"; }
-function afficherFormCotisation() { const f = document.getElementById("form-cotisation"); f.style.display = f.style.display === "none" ? "block" : "none"; }
-function voirQR(qrCode) { document.getElementById("qr-content").innerHTML = "<img src='" + qrCode + "' style='max-width:200px'>"; document.getElementById("modal-qr").style.display = "flex"; }
-function fermerQR() { document.getElementById("modal-qr").style.display = "none"; }
 function deconnexion() { localStorage.removeItem("token"); window.location.href = "/"; }
+function toggleForm(id) { const f = document.getElementById(id); f.style.display = f.style.display === "none" ? "block" : "none"; }
+function voirQR(qrCode) { document.getElementById("qr-content").innerHTML = "<img src='" + qrCode + "' style='max-width:200px'>"; document.getElementById("modal-qr").style.display = "flex"; }
+
+function formatDate(d) { return new Date(d).toLocaleDateString("fr-FR"); }
+function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString("fr-FR") + " " + dt.toLocaleTimeString("fr-FR", {hour:"2-digit",minute:"2-digit"}); }
+
+function afficherTab(tab) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+  document.getElementById("section-" + tab).classList.add("active");
+  event.target.classList.add("active");
+  if (tab === "cotisations") { chargerCotisations(); remplirSelectClients(); }
+  if (tab === "livraisons") chargerLivraisons();
+  if (tab === "messages") chargerMessages();
+}
 
 async function chargerClients() {
   const res = await fetch("/api/admin/clients", { headers: { "Authorization": "Bearer " + token } });
   const data = await res.json();
   document.getElementById("total-clients").textContent = data.length;
   const tbody = document.getElementById("clients-table");
-  tbody.innerHTML = "";
-  data.forEach(c => {
-    tbody.innerHTML += "<tr><td>" + c.nom + "</td><td>" + c.prenom + "</td><td>" + c.telephone + "</td><td><span class='badge badge-client'>" + c.role + "</span></td><td>" + (c.qrCode ? "<button class='btn btn-green' onclick='voirQR(\"" + c.qrCode + "\")'>Voir QR</button>" : "-") + "</td></tr>";
-  });
+  tbody.innerHTML = data.map(c => "<tr><td><strong>" + c.nom + "</strong></td><td>" + c.prenom + "</td><td>" + c.telephone + "</td><td>" + formatDate(c.dateCreation) + "</td><td>" + (c.qrCode ? "<button class='btn btn-green' onclick='voirQR(\"" + c.qrCode + "\")'>Voir QR</button>" : "-") + "</td></tr>").join("");
+}
+
+async function remplirSelectClients() {
+  const res = await fetch("/api/admin/clients", { headers: { "Authorization": "Bearer " + token } });
+  const data = await res.json();
   const select = document.getElementById("cot-client");
-  select.innerHTML = "<option value=''>-- Choisir un client --</option>";
-  data.forEach(c => { select.innerHTML += "<option value='" + c._id + "'>" + c.nom + " " + c.prenom + "</option>"; });
+  select.innerHTML = "<option value=''>-- Choisir un client --</option>" + data.map(c => "<option value='" + c._id + "'>" + c.nom + " " + c.prenom + "</option>").join("");
 }
 
 async function ajouterClient() {
@@ -116,23 +163,21 @@ async function ajouterClient() {
   const motDePasse = document.getElementById("new-mdp").value;
   const res = await fetch("/api/auth/inscription", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ nom, prenom, telephone, motDePasse }) });
   const data = await res.json();
-  if (res.ok) { alert("Client ajouté !"); fermerForm("form-client"); chargerClients(); }
+  if (res.ok) { alert("Client ajouté !"); toggleForm("form-client"); chargerClients(); }
   else { alert("Erreur: " + data.message); }
 }
 
 async function chargerCotisations() {
   const res = await fetch("/api/cotisations", { headers: { "Authorization": "Bearer " + token } });
   const data = await res.json();
-  const div = document.getElementById("liste-cotisations");
-  if (!data.length) { div.innerHTML = "<p style='color:#888;margin-top:10px'>Aucune cotisation.</p>"; return; }
-  let html = "<table style='margin-top:15px'><thead><tr><th>Client</th><th>Mois</th><th>Objectif</th><th>Collecté</th><th>Progression</th><th>Statut</th><th>Action</th></tr></thead><tbody>";
-  data.forEach(c => {
+  document.getElementById("total-cotisations").textContent = data.filter(c => c.statut === "en_cours").length;
+  document.getElementById("total-collecte").textContent = data.reduce((s, c) => s + c.montantCollecte, 0).toLocaleString();
+  const tbody = document.getElementById("cotisations-table");
+  tbody.innerHTML = data.map(c => {
     const pct = Math.min(Math.round((c.montantCollecte / c.montantObjectif) * 100), 100);
     const couleur = c.statut === "complete" ? "#2e7d32" : c.statut === "livre" ? "#1565c0" : "#f57c00";
-    html += "<tr><td>" + c.client.nom + " " + c.client.prenom + "</td><td>" + c.mois + "</td><td>" + c.montantObjectif + " FCFA<br><small>" + c.objectifPoulets + " poulet(s)</small></td><td>" + c.montantCollecte + " FCFA</td><td><div class='progress-bar'><div class='progress-fill' style='width:" + pct + "%'></div></div><small>" + pct + "%</small></td><td><span style='background:" + couleur + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + c.statut + "</span></td><td><button class='btn btn-green' style='font-size:12px' onclick='ajouterVersement(\"" + c._id + "\")'>+ Versement</button></td></tr>";
-  });
-  html += "</tbody></table>";
-  div.innerHTML = html;
+    return "<tr><td><strong>" + c.client.nom + "</strong><br><small>" + c.client.telephone + "</small></td><td>" + c.mois + "</td><td>" + c.montantObjectif.toLocaleString() + " FCFA<br><small>" + c.objectifPoulets + " poulet(s)</small></td><td>" + c.montantCollecte.toLocaleString() + " FCFA</td><td><div class='progress-bar'><div class='progress-fill' style='width:" + pct + "%'></div></div><small>" + pct + "%</small></td><td>" + (c.jourLivraisonChoisi ? "Le " + c.jourLivraisonChoisi : "Non défini") + "</td><td><span style='background:" + couleur + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + c.statut + "</span></td><td><button class='btn btn-green' style='margin-bottom:3px' onclick='ajouterVersement(\"" + c._id + "\")'>+ Versement</button><br>" + (c.statut === "complete" ? "<button class='btn btn-blue' onclick='confirmerLivraison(\"" + c._id + "\")'>Livrer</button>" : "") + "</td></tr>";
+  }).join("");
 }
 
 async function creerCotisation() {
@@ -143,7 +188,7 @@ async function creerCotisation() {
   if (!clientId || !objectifPoulets || !mois) { alert("Remplissez tous les champs"); return; }
   const res = await fetch("/api/cotisations", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ clientId, objectifPoulets, prixUnitaire, mois }) });
   const data = await res.json();
-  if (res.ok) { alert("Cotisation créée !"); fermerForm("form-cotisation"); chargerCotisations(); }
+  if (res.ok) { alert("Cotisation créée !"); toggleForm("form-cotisation"); chargerCotisations(); }
   else { alert("Erreur: " + data.message); }
 }
 
@@ -151,10 +196,47 @@ async function ajouterVersement(cotisationId) {
   const montant = prompt("Montant du versement (FCFA):");
   if (!montant) return;
   const modePaiement = prompt("Mode de paiement (Wave / Orange Money / Moov Money):");
-  const res = await fetch("/api/cotisations/" + cotisationId + "/versement", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ montant: parseInt(montant), modePaiement }) });
+  const reference = prompt("Référence de transaction (optionnel):");
+  const res = await fetch("/api/cotisations/" + cotisationId + "/versement", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ montant: parseInt(montant), modePaiement, reference }) });
   const data = await res.json();
   if (res.ok) { alert("Versement enregistré !"); chargerCotisations(); }
   else { alert("Erreur: " + data.message); }
+}
+
+async function confirmerLivraison(cotisationId) {
+  if (!confirm("Confirmer la livraison de cette commande ?")) return;
+  const res = await fetch("/api/cotisations/" + cotisationId + "/livrer", { method: "PUT", headers: { "Authorization": "Bearer " + token } });
+  if (res.ok) { alert("Livraison confirmée !"); chargerCotisations(); chargerLivraisons(); }
+}
+
+async function chargerLivraisons() {
+  const res = await fetch("/api/cotisations", { headers: { "Authorization": "Bearer " + token } });
+  const data = await res.json();
+  const tbody = document.getElementById("livraisons-table");
+  const livraisons = data.filter(c => c.statut === "complete" || c.statut === "livre");
+  if (!livraisons.length) { tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;color:#888'>Aucune livraison en attente.</td></tr>"; return; }
+  tbody.innerHTML = livraisons.map(c => {
+    const couleur = c.statut === "livre" ? "#1565c0" : "#f57c00";
+    return "<tr><td><strong>" + c.client.nom + " " + c.client.prenom + "</strong><br><small>" + c.client.telephone + "</small></td><td>" + c.mois + "</td><td>" + c.objectifPoulets + " poulet(s)</td><td>" + (c.jourLivraisonChoisi ? "Le " + c.jourLivraisonChoisi : "Non défini") + "</td><td><span style='background:" + couleur + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + (c.statut === "livre" ? "✅ Livré" : "⏳ À livrer") + "</span></td><td>" + (c.statut === "complete" ? "<button class='btn btn-blue' onclick='confirmerLivraison(\"" + c._id + "\")'>Confirmer livraison</button>" : formatDateHeure(c.dateLivraisonEffective)) + "</td></tr>";
+  }).join("");
+}
+
+async function chargerMessages() {
+  const res = await fetch("/api/messages", { headers: { "Authorization": "Bearer " + token } });
+  const data = await res.json();
+  const nonLus = data.filter(m => !m.lu).length;
+  document.getElementById("total-messages").textContent = nonLus;
+  document.getElementById("notif-messages").textContent = nonLus;
+  const container = document.getElementById("messages-container");
+  if (!data.length) { container.innerHTML = "<p style='color:#888;text-align:center'>Aucun message.</p>"; return; }
+  container.innerHTML = data.map(m => "<div class='message-item' style='border-left-color:" + (m.lu ? "#ccc" : "#c62828") + "'><div style='display:flex;justify-content:space-between'><strong>" + m.client.nom + " " + m.client.prenom + "</strong><small>" + formatDateHeure(m.dateEnvoi) + "</small></div><small style='color:#666'>" + m.client.telephone + "</small><p style='margin:8px 0'>" + m.contenu + "</p>" + (m.reponse ? "<div style='background:#e8f5e9;padding:8px;border-radius:5px;font-size:13px'>📩 Votre réponse: " + m.reponse + "</div>" : "<div style='display:flex;gap:5px;margin-top:8px'><input type='text' id='rep-" + m._id + "' placeholder='Écrire une réponse...' style='margin:0;padding:8px'><button class='btn btn-green' onclick='repondreMessage(\"" + m._id + "\")'>Répondre</button></div>") + "</div>").join("");
+}
+
+async function repondreMessage(messageId) {
+  const reponse = document.getElementById("rep-" + messageId).value;
+  if (!reponse.trim()) { alert("Écrivez une réponse"); return; }
+  const res = await fetch("/api/messages/" + messageId + "/repondre", { method: "PUT", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ reponse }) });
+  if (res.ok) { alert("Réponse envoyée !"); chargerMessages(); }
 }
 
 chargerClients();

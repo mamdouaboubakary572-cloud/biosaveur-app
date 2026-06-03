@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const versementSchema = new mongoose.Schema({
   montant: Number,
   date: { type: Date, default: Date.now },
-  modePaiement: { type: String, default: 'Wave' }
+  modePaiement: { type: String, default: 'Wave' },
+  reference: { type: String, default: '' }
 });
 
 const cotisationSchema = new mongoose.Schema({
@@ -14,7 +15,9 @@ const cotisationSchema = new mongoose.Schema({
   montantObjectif: Number,
   montantCollecte: { type: Number, default: 0 },
   versements: [versementSchema],
-  statut: { type: String, enum: ['en_cours', 'complete', 'livre'], default: 'en_cours' }
+  statut: { type: String, enum: ['en_cours', 'complete', 'livre'], default: 'en_cours' },
+  jourLivraisonChoisi: { type: Number, min: 1, max: 31 },
+  dateLivraisonEffective: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Cotisation', cotisationSchema);

@@ -43,3 +43,28 @@ router.post('/connexion', async (req, res) => {
 });
 
 module.exports = router;
+// Client: changer mot de passe
+router.put('/changer-mdp', auth, async (req, res) => {
+  try {
+    const { ancienMdp, nouveauMdp } = req.body;
+    const user = await User.findById(req.user.id);
+    const valide = await user.verifierMotDePasse(ancienMdp);
+    if (!valide) return res.status(401).json({ message: 'Ancien mot de passe incorrect' });
+    user.motDePasse = await bcrypt.hash(nouveauMdp, 10);
+    await user.save();
+    res.json({ message: 'Mot de passe modifié avec succès' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Client: choisir jour de livraison
+router.put('/jour-livraison', auth, async (req, res) => {
+  try {
+    const { jourLivraison } = req.body;
+    await User.findByIdAndUpdate(req.user.id, { jourLivraison });
+    res.json({ message: 'Jour de livraison mis à jour' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
