@@ -147,6 +147,7 @@
         msg.textContent = 'Inscription réussie ! Bienvenue ' + data.user.nom;
         msg.style.display = 'block';
         localStorage.setItem('token', data.token);
+        window.location.href = '/dashboard.html';
         if (data.user.qrCode) {
           qrDiv.innerHTML = '<p>Votre QR Code client :</p><img src="' + data.user.qrCode + '">';
         }
@@ -180,6 +181,7 @@
         msg.textContent = 'Bienvenue ' + data.user.nom + ' !';
         msg.style.display = 'block';
         localStorage.setItem('token', data.token);
+        window.location.href = '/dashboard.html';
       } else {
         msg.className = 'message error';
         msg.textContent = data.message;
