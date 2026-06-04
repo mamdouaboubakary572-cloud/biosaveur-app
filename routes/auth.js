@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 router.post('/inscription', async (req, res) => {
   try {
