@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Cotisation = require('../models/Cotisation');
 const auth = require('../middleware/auth');
+const { envoyerSMS } = require('../services/sms');
 
 // Admin: créer cotisation pour un client
 router.post('/', auth, async (req, res) => {
@@ -10,26 +11,21 @@ router.post('/', auth, async (req, res) => {
     const montantObjectif = objectifPoulets * (prixUnitaire || 2800);
     const cotisation = new Cotisation({ client: clientId, objectifPoulets, prixUnitaire: prixUnitaire || 2800, montantObjectif, mois, jourLivraisonChoisi });
     await cotisation.save();
-    res.status(201).json({ message: 'Cotisation créée', cotisation });
+    // SMS confirmation
+      try {
+        const client = await require('../models/Client').findById(clientId);
+        if (client && client.telephone) {
+          await envoyerSMS('+225' + client.telephone, `Bonjour ${client.prenom}, votre cotisation BIOSAVEUR de ${objectifPoulets} poulets a été créée. Montant: ${montantObjectif} FCFA.`);
+        }
+      } catch(smsErr) { console.error('SMS err:', smsErr); }
+      res.status(201).json({ message: 'Cotisation créée', cotisation });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
 
 // Admin: ajouter un versement
-router.post('/:id/versement', auth, async (req, res) => {
-  try {
-    const { montant, modePaiement, reference } = req.body;
-    const cotisation = await Cotisation.findById(req.params.id);
-    cotisation.versements.push({ montant, modePaiement, reference, date: new Date() });
-    cotisation.montantCollecte += montant;
-    if (cotisation.montantCollecte >= cotisation.montantObjectif) cotisation.statut = 'complete';
-    await cotisation.save();
-    res.json({ message: 'Versement enregistré', cotisation });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
-  }
-});
+
 
 // Admin: toutes les cotisations
 router.get('/', auth, async (req, res) => {
@@ -40,7 +36,26 @@ router.get('/', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
-
+router.post('/:id/versement', auth, async (req, res) => {
+  try {
+    const { montant, modePaiement, reference } = req.body;
+    const cotisation = await Cotisation.findById(req.params.id);
+    cotisation.versements.push({ montant, modePaiement, reference, date: new Date() });
+    cotisation.montantCollecte += montant;
+    if (cotisation.montantCollecte >= cotisation.montantObjectif) cotisation.statut = 'complete';
+    await cotisation.save();
+    try {
+      await cotisation.populate('client', 'nom prenom telephone');
+      const cl = cotisation.client;
+      if (cl && cl.telephone) {
+        await envoyerSMS('+225' + cl.telephone, `Bonjour ${cl.prenom}, versement de ${montant} FCFA enregistré. Total: ${cotisation.montantCollecte}/${cotisation.montantObjectif} FCFA.`);
+      }
+    } catch(smsErr) { console.error('SMS versement err:', smsErr); }
+    res.json({ message: 'Versement enregistré', cotisation });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 // Admin: marquer comme livré
 router.put('/:id/livrer', auth, async (req, res) => {
   try {
