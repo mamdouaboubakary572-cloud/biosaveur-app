@@ -58,6 +58,7 @@ textarea { height: 100px; resize: vertical; }
   <div class="tabs">
     <button class="tab-btn active" onclick="afficherTab('cotisations')">💰 Cotisations</button>
     <button class="tab-btn" onclick="afficherTab('messages')">✉️ Messages</button>
+    <button class="tab-btn" onclick="afficherTab('paiement')">💳 Paiement</button>
     <button class="tab-btn" onclick="afficherTab('parametres')">⚙️ Paramètres</button>
   </div>
 
@@ -73,6 +74,24 @@ textarea { height: 100px; resize: vertical; }
       <button class="btn btn-green" onclick="envoyerMessage()">Envoyer</button>
     </div>
     <div id="liste-messages"></div>
+  </div>
+
+  <div id="tab-paiement" class="tab-content">
+    <div class="card">
+      <h2>💳 Effectuer un paiement</h2>
+      <p style="color:#666;margin-bottom:20px">Choisissez votre mode de paiement pour verser votre cotisation directement à BIOSAVEUR.</p>
+      <div style="margin-bottom:15px">
+        <label style="font-size:14px;color:#666">Montant à verser (FCFA)</label>
+        <input type="number" id="montant-paiement" placeholder="Ex: 5000" style="margin-top:5px">
+      </div>
+      <div style="display:flex;gap:15px;flex-wrap:wrap">
+        <button onclick="payerWave()" style="flex:1;padding:20px;background:#1a73e8;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px;font-weight:bold">📱 Payer avec Wave<br><small style="font-weight:normal">0769476546</small></button>
+        <button onclick="payerOrangeMoney()" style="flex:1;padding:20px;background:#ff6600;color:white;border:none;border-radius:10px;cursor:pointer;font-size:16px;font-weight:bold">📱 Payer Orange Money<br><small style="font-weight:normal">0769476546</small></button>
+      </div>
+      <div style="margin-top:20px;padding:15px;background:#fff3e0;border-radius:8px;font-size:13px;color:#f57c00">
+        ⚠️ Après votre paiement, BIOSAVEUR enregistrera votre versement et vous recevrez une confirmation.
+      </div>
+    </div>
   </div>
 
   <div id="tab-parametres" class="tab-content">
