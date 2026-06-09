@@ -5,14 +5,13 @@ const QRCode = require('qrcode');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-
+ 
+// Inscription client
 router.post('/inscription', async (req, res) => {
   try {
     const { nom, prenom, telephone, email, motDePasse } = req.body;
     const existant = await User.findOne({ telephone });
-    if (existant) {
-      return res.status(400).json({ message: 'Ce numéro existe déjà' });
-    }
+    if (existant) return res.status(400).json({ message: 'Ce numéro existe déjà' });
     const hash = await bcrypt.hash(motDePasse, 10);
     const user = new User({ nom, prenom, telephone, email, motDePasse: hash });
     await user.save();
@@ -27,7 +26,8 @@ router.post('/inscription', async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
-
+ 
+// Connexion
 router.post('/connexion', async (req, res) => {
   try {
     const { telephone, motDePasse } = req.body;
@@ -42,9 +42,8 @@ router.post('/connexion', async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
-
-module.exports = router;
-// Client: changer mot de passe
+ 
+// Changer mot de passe
 router.put('/changer-mdp', auth, async (req, res) => {
   try {
     const { ancienMdp, nouveauMdp } = req.body;
@@ -58,8 +57,8 @@ router.put('/changer-mdp', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
-
-// Client: choisir jour de livraison
+ 
+// Choisir jour de livraison
 router.put('/jour-livraison', auth, async (req, res) => {
   try {
     const { jourLivraison } = req.body;
@@ -69,3 +68,5 @@ router.put('/jour-livraison', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+ 
+module.exports = router;

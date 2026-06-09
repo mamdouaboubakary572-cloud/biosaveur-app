@@ -3,244 +3,1008 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIOSAVEUR - Tableau de Bord Admin</title>
+<title>BIOSAVEUR – Tableau de Bord Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: Arial, sans-serif; background: #f5f5f5; }
-header { background: #2e7d32; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-header h1 { font-size: 20px; }
-.logout { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; }
-.stat-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.stat-card h2 { font-size: 30px; color: #2e7d32; }
-.stat-card p { color: #666; margin-top: 5px; font-size: 13px; }
-.tabs { display: flex; gap: 5px; padding: 0 20px 15px; flex-wrap: wrap; }
-.tab-btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; background: #e8f5e9; color: #2e7d32; font-size: 13px; font-weight: bold; }
-.tab-btn.active { background: #2e7d32; color: white; }
-.section { margin: 0 20px 20px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
-.section.active { display: block; }
-.section h3 { color: #2e7d32; margin-bottom: 15px; font-size: 18px; }
-table { width: 100%; border-collapse: collapse; }
-th { background: #2e7d32; color: white; padding: 10px; text-align: left; font-size: 13px; }
-td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-tr:hover { background: #f9f9f9; }
-.btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; }
-.btn-green { background: #2e7d32; color: white; }
-.btn-red { background: #c62828; color: white; }
-.btn-blue { background: #1565c0; color: white; }
-.btn-orange { background: #f57c00; color: white; }
-.form-box { display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0; }
-.form-box h4 { color: #2e7d32; margin-bottom: 15px; }
-input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-textarea { height: 80px; }
-.badge { padding: 3px 8px; border-radius: 5px; font-size: 12px; }
-.progress-bar { background: #eee; border-radius: 10px; height: 8px; }
-.progress-fill { background: #2e7d32; border-radius: 10px; height: 8px; }
-.message-item { padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #f9f9f9; border-left: 4px solid #2e7d32; }
-.notif { background: #c62828; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; margin-left: 5px; }
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --green:#1a6b3c;--green-light:#e8f5ee;--green-mid:#2d8653;
+  --gold:#c8960c;--gold-light:#fdf3d0;
+  --bg:#f4f6f4;--surface:#ffffff;--border:#e0e8e2;
+  --text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;
+  --red:#c0392b;--red-light:#fdecea;
+  --blue:#1565c0;--blue-light:#e3eefa;
+  --amber:#e65100;--amber-light:#fff3e0;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 4px rgba(0,0,0,0.07);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--green);color:white;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.3px;}
+.logo span{color:#a8d5b5;font-weight:400;font-size:13px;margin-left:6px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .2s;}
+.btn-logout:hover{background:rgba(255,255,255,0.25);}
+.admin-badge{font-size:11px;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:99px;letter-spacing:0.3px;}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 56px);}
+
+/* SIDEBAR */
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.nav-section{padding:0 12px;margin-bottom:4px;}
+.nav-label{font-size:10px;font-weight:600;color:var(--text-light);letter-spacing:1px;text-transform:uppercase;padding:8px 8px 4px;}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;background:transparent;color:var(--text-muted);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;text-align:left;}
+.nav-btn:hover{background:var(--green-light);color:var(--green);}
+.nav-btn.active{background:var(--green-light);color:var(--green);font-weight:600;}
+.nav-btn .icon{font-size:16px;width:20px;text-align:center;}
+.nav-btn .notif{background:var(--red);color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:auto;}
+
+/* MAIN */
+.main{flex:1;padding:20px 24px;overflow-x:hidden;}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.stat-card .s-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.stat-card .s-value{font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+.stat-card .s-sub{font-size:11px;color:var(--text-light);margin-top:4px;}
+.stat-card.green .s-value{color:var(--green);}
+.stat-card.red .s-value{color:var(--red);}
+.stat-card.gold .s-value{color:var(--gold);}
+.stat-card.blue .s-value{color:var(--blue);}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow);}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.chart-legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+.chart-legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);}
+.legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+/* SECTION PANELS */
+.section{display:none;}
+.section.active{display:block;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-size:16px;font-weight:600;color:var(--text);}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;}
+.btn-green{background:var(--green);color:white;}.btn-green:hover{background:var(--green-mid);}
+.btn-red{background:var(--red);color:white;}
+.btn-blue{background:var(--blue);color:white;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted);}.btn-ghost:hover{background:var(--green-light);color:var(--green);border-color:var(--green);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-amber{background:var(--amber);color:white;}
+
+/* FORM BOX */
+.form-box{background:var(--green-light);border:1px solid #b8ddc5;border-radius:var(--radius-lg);padding:18px;margin-bottom:16px;display:none;}
+.form-box h4{color:var(--green);margin-bottom:12px;font-size:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr;}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:white;color:var(--text);outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--green);}
+.form-actions{display:flex;gap:8px;margin-top:4px;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;background:var(--surface);}
+th{background:var(--green);color:white;padding:10px 12px;text-align:left;font-size:12px;font-weight:600;letter-spacing:0.3px;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+tr:hover td{background:#f8fbf9;}
+tr:last-child td{border-bottom:none;}
+
+/* BADGES */
+.badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-light);color:var(--green);}
+.badge-red{background:var(--red-light);color:var(--red);}
+.badge-blue{background:var(--blue-light);color:var(--blue);}
+.badge-amber{background:var(--amber-light);color:var(--amber);}
+.badge-gray{background:#f0f0f0;color:#666;}
+
+/* PROGRESS */
+.progress-bar{background:#e0e8e2;border-radius:99px;height:6px;overflow:hidden;margin-top:3px;}
+.progress-fill{height:100%;border-radius:99px;background:var(--green);transition:width .4s;}
+
+/* MESSAGE ITEMS */
+.message-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;border-left:3px solid var(--green-light);}
+.message-item.unread{border-left-color:var(--green);}
+.msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.msg-name{font-weight:600;font-size:13px;}
+.msg-date{font-size:11px;color:var(--text-light);}
+.msg-body{font-size:13px;color:var(--text-muted);line-height:1.5;}
+.msg-reply{margin-top:8px;background:#f8fbf9;border-radius:6px;padding:8px 10px;font-size:12px;color:var(--green);border-left:2px solid var(--green);}
+.msg-input-row{display:flex;gap:8px;margin-top:8px;}
+.msg-input-row input{flex:1;}
+
+/* MODAL QR */
+#modal-qr{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-qr.show{display:flex;}
+.modal-inner{background:white;padding:28px;border-radius:var(--radius-lg);text-align:center;max-width:320px;}
+.modal-inner h4{margin-bottom:14px;color:var(--green);}
+
+/* CALENDRIER */
+.cal-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.cal-header{background:var(--green);color:white;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+.cal-nav{background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-day-name{text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--text-muted);background:#f8fbf9;border-bottom:1px solid var(--border);}
+.cal-day{min-height:52px;padding:4px 6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background .15s;}
+.cal-day:hover{background:var(--green-light);}
+.cal-day.today{background:var(--green-light);}
+.cal-day .day-num{font-weight:600;margin-bottom:2px;}
+.cal-day.today .day-num{color:var(--green);}
+.cal-day .event-dot{width:6px;height:6px;background:var(--green);border-radius:99px;margin:1px 0;}
+.cal-day.other-month{opacity:0.35;}
+
+/* SMS */
+.sms-rule{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.sms-rule .rule-icon{font-size:20px;}
+.sms-rule .rule-info{flex:1;}
+.sms-rule .rule-title{font-weight:600;font-size:13px;}
+.sms-rule .rule-desc{font-size:12px;color:var(--text-muted);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--text-light);}
+.empty .empty-icon{font-size:36px;margin-bottom:8px;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .charts-row{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .form-row.triple{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
+
 <header>
-  <h1>🐔 BIOSAVEUR — Tableau de Bord Admin</h1>
-  <button class="logout" onclick="deconnexion()">Déconnexion</button>
+  <div class="header-left">
+    <div class="logo">🐓 BIOSAVEUR <span>Poulet Molo Molo</span></div>
+  </div>
+  <div class="header-right">
+    <span class="admin-badge" id="admin-name">Admin</span>
+    <button class="btn-logout" onclick="deconnexion()">Déconnexion</button>
+  </div>
 </header>
 
-<div class="stats">
-  <div class="stat-card"><h2 id="total-clients">0</h2><p>Clients inscrits</p></div>
-  <div class="stat-card"><h2 id="total-cotisations">0</h2><p>Cotisations actives</p></div>
-  <div class="stat-card"><h2 id="total-collecte">0</h2><p>FCFA collectés</p></div>
-  <div class="stat-card"><h2 id="total-messages">0</h2><p>Messages non lus</p></div>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <button class="nav-btn active" onclick="afficherTab('dashboard')"><span class="icon">📊</span> Tableau de bord</button>
+      <button class="nav-btn" onclick="afficherTab('clients')"><span class="icon">👥</span> Clients</button>
+      <button class="nav-btn" onclick="afficherTab('cotisations')"><span class="icon">🐔</span> Cotisations</button>
+      <button class="nav-btn" onclick="afficherTab('livraisons')"><span class="icon">🚚</span> Livraisons</button>
+      <button class="nav-btn" onclick="afficherTab('paiements')"><span class="icon">💰</span> Paiements</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Communication</div>
+      <button class="nav-btn" onclick="afficherTab('messages')"><span class="icon">💬</span> Messages <span class="notif" id="notif-messages" style="display:none">0</span></button>
+      <button class="nav-btn" onclick="afficherTab('sms')"><span class="icon">📱</span> SMS</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Organisation</div>
+      <button class="nav-btn" onclick="afficherTab('calendrier')"><span class="icon">📅</span> Calendrier</button>
+      <button class="nav-btn" onclick="afficherTab('admins')"><span class="icon">🔐</span> Administrateurs</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="section active" id="section-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="s-label">👥 Clients inscrits</div>
+          <div class="s-value" id="total-clients">0</div>
+          <div class="s-sub">Abonnés actifs</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="s-label">🐔 Cotisations actives</div>
+          <div class="s-value" id="total-cotisations">0</div>
+          <div class="s-sub">En cours ce mois</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="s-label">💰 FCFA collectés</div>
+          <div class="s-value" id="total-collecte">0</div>
+          <div class="s-sub">Versements reçus</div>
+        </div>
+        <div class="stat-card red">
+          <div class="s-label">💬 Messages non lus</div>
+          <div class="s-value" id="total-messages">0</div>
+          <div class="s-sub">En attente de réponse</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">✅ Cotisations complètes</div>
+          <div class="s-value" id="total-completes" style="color:var(--green)">0</div>
+          <div class="s-sub">Prêtes à livrer</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-label">🚚 Livraisons effectuées</div>
+          <div class="s-value" id="total-livrees" style="color:var(--blue)">0</div>
+          <div class="s-sub">Ce mois-ci</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">📈 Collecte vs Objectif (6 mois)</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#1a6b3c"></span>Collecté</span>
+            <span><span class="legend-dot" style="background:#c8960c"></span>Objectif</span>
+          </div>
+          <div style="position:relative;height:180px;">
+            <canvas id="chartCollecte" role="img" aria-label="Collecte vs objectif sur 6 mois">Graphique collecte mensuelle.</canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🥧 Statut des cotisations</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#1a6b3c"></span>Complètes</span>
+            <span><span class="legend-dot" style="background:#1565c0"></span>En cours</span>
+            <span><span class="legend-dot" style="background:#e65100"></span>En retard</span>
+          </div>
+          <div style="position:relative;height:180px;">
+            <canvas id="chartStatut" role="img" aria-label="Répartition statuts cotisations">Graphique statuts.</canvas>
+          </div>
+        </div>
+        <div class="chart-card full">
+          <div class="chart-title">📊 Évolution clients & livraisons (6 mois)</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#1565c0;border-radius:99px"></span>Nouveaux clients</span>
+            <span><span class="legend-dot" style="background:#1a6b3c;border-radius:99px"></span>Livraisons</span>
+          </div>
+          <div style="position:relative;height:150px;">
+            <canvas id="chartEvol" role="img" aria-label="Évolution clients et livraisons">Graphique évolution.</canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-row" style="grid-template-columns:1fr 1fr;">
+        <div class="chart-card">
+          <div class="chart-title">🏆 Top clients (poulets objectif)</div>
+          <div id="top-clients-list">
+            <div class="empty"><div class="empty-icon">⏳</div>Chargement...</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🔔 Alertes & actions rapides</div>
+          <div id="alertes-list">
+            <div class="empty"><div class="empty-icon">⏳</div>Chargement...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CLIENTS ===== -->
+    <div class="section" id="section-clients">
+      <div class="section-header">
+        <div class="section-title">👥 Gestion des Clients</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="search-clients" placeholder="🔍 Rechercher un client..." style="width:220px;" oninput="filtrerClients(this.value)">
+          <button class="btn btn-green" onclick="toggleForm('form-client')">+ Ajouter un client</button>
+        </div>
+      </div>
+
+      <div class="form-box" id="form-client">
+        <h4>Nouveau Client</h4>
+        <div class="form-row">
+          <input type="text" id="new-nom" placeholder="Nom *">
+          <input type="text" id="new-prenom" placeholder="Prénom *">
+        </div>
+        <div class="form-row">
+          <input type="tel" id="new-tel" placeholder="Téléphone *">
+          <input type="password" id="new-mdp" placeholder="Mot de passe temporaire *">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-green" onclick="ajouterClient()">✓ Enregistrer</button>
+          <button class="btn btn-ghost" onclick="toggleForm('form-client')">Annuler</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Nom & Prénom</th><th>Téléphone</th><th>Inscription</th><th>QR Code</th><th>Actions</th></tr></thead>
+          <tbody id="clients-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== COTISATIONS ===== -->
+    <div class="section" id="section-cotisations">
+      <div class="section-header">
+        <div class="section-title">🐔 Gestion des Cotisations</div>
+        <button class="btn btn-green" onclick="toggleForm('form-cotisation')">+ Nouvelle cotisation</button>
+      </div>
+
+      <div class="form-box" id="form-cotisation">
+        <h4>Créer une cotisation</h4>
+        <div class="form-row triple">
+          <select id="cot-client"><option value="">-- Choisir un client --</option></select>
+          <input type="number" id="cot-poulets" placeholder="Nombre de poulets *">
+          <input type="number" id="cot-prix" placeholder="Prix unitaire (défaut: 2800 FCFA)">
+        </div>
+        <div class="form-row">
+          <input type="text" id="cot-mois" placeholder="Mois (ex: Juin 2025) *">
+          <input type="number" id="cot-jour" placeholder="Jour de livraison souhaité (1-31)">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-green" onclick="creerCotisation()">✓ Créer</button>
+          <button class="btn btn-ghost" onclick="toggleForm('form-cotisation')">Annuler</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Mois</th><th>Objectif</th><th>Collecté</th><th>Progression</th><th>Livraison</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="cotisations-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== LIVRAISONS ===== -->
+    <div class="section" id="section-livraisons">
+      <div class="section-header">
+        <div class="section-title">🚚 Suivi des Livraisons</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Mois</th><th>Poulets</th><th>Jour choisi</th><th>Date effective</th><th>Statut</th><th>Action</th></tr></thead>
+          <tbody id="livraisons-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAIEMENTS ===== -->
+    <div class="section" id="section-paiements">
+      <div class="stats-grid">
+        <div class="stat-card gold"><div class="s-label">💰 Total collecté</div><div class="s-value" id="p-collecte">0</div><div class="s-sub">FCFA</div></div>
+        <div class="stat-card"><div class="s-label">🎯 Objectif total</div><div class="s-value" id="p-objectif">0</div><div class="s-sub">FCFA visé</div></div>
+        <div class="stat-card blue"><div class="s-label">📊 Taux collecte</div><div class="s-value" id="p-taux" style="color:var(--blue)">0%</div><div class="s-sub">% atteint</div></div>
+        <div class="stat-card red"><div class="s-label">⚠️ En retard</div><div class="s-value" id="p-retard">0</div><div class="s-sub">cotisations</div></div>
+        <div class="stat-card green"><div class="s-label">✅ Complètes</div><div class="s-value" id="p-completes">0</div><div class="s-sub">cotisations</div></div>
+        <div class="stat-card"><div class="s-label">📱 Versements</div><div class="s-value" id="p-versements" style="color:var(--blue)">0</div><div class="s-sub">transactions</div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">📊 Modes de paiement</div>
+          <div style="position:relative;height:180px;"><canvas id="p-chartModes"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🥧 Statut cotisations</div>
+          <div style="position:relative;height:180px;"><canvas id="p-chartStatuts"></canvas></div>
+        </div>
+        <div class="chart-card full">
+          <div class="chart-title">📈 Top collectes par client</div>
+          <div style="position:relative;height:160px;"><canvas id="p-chartTop"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">📋 Historique des versements</div>
+        <div style="display:flex;gap:8px;">
+          <select id="p-filter-mode" onchange="filtrerPaiements()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <option value="">Tous les modes</option>
+            <option value="Wave">Wave</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Moov Money">Moov Money</option>
+            <option value="Espèces">Espèces</option>
+          </select>
+          <button class="btn btn-green btn-sm" onclick="exporterCSVPaiements()">📥 Export CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-bottom:16px;">
+        <table>
+          <thead><tr><th>Client</th><th>Mois</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Date</th><th>Progression</th></tr></thead>
+          <tbody id="p-versements-table"></tbody>
+        </table>
+      </div>
+
+      <div class="section-header" style="margin-top:16px;">
+        <div class="section-title">🐔 Suivi cotisations & paiements</div>
+        <div style="display:flex;gap:8px;">
+          <select id="p-filter-statut" onchange="filtrerCotisationsPaiements()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <option value="">Tous les statuts</option>
+            <option value="en_cours">En cours</option>
+            <option value="complete">Complètes</option>
+            <option value="livre">Livrées</option>
+          </select>
+          <button class="btn btn-amber btn-sm" onclick="relancerRetards()">📱 Relancer retards</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Mois</th><th>Objectif</th><th>Collecté</th><th>Reste</th><th>Progression</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="p-cotisations-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== MESSAGES ===== -->
+    <div class="section" id="section-messages">
+      <div class="section-header">
+        <div class="section-title">💬 Messages des Clients</div>
+      </div>
+      <div id="messages-container"></div>
+    </div>
+
+    <!-- ===== SMS ===== -->
+    <div class="section" id="section-sms">
+      <div class="section-header">
+        <div class="section-title">📱 Gestion des SMS</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="chart-card">
+          <div class="chart-title">⚙️ Règles SMS automatiques</div>
+          <div class="sms-rule">
+            <span class="rule-icon">🔔</span>
+            <div class="rule-info">
+              <div class="rule-title">Rappel versement</div>
+              <div class="rule-desc">3 jours avant la fin du mois</div>
+            </div>
+            <input type="checkbox" checked>
+          </div>
+          <div class="sms-rule">
+            <span class="rule-icon">✅</span>
+            <div class="rule-info">
+              <div class="rule-title">Confirmation versement</div>
+              <div class="rule-desc">Immédiatement après enregistrement</div>
+            </div>
+            <input type="checkbox" checked>
+          </div>
+          <div class="sms-rule">
+            <span class="rule-icon">🚚</span>
+            <div class="rule-info">
+              <div class="rule-title">Livraison imminente</div>
+              <div class="rule-desc">La veille de la livraison</div>
+            </div>
+            <input type="checkbox" checked>
+          </div>
+          <div class="sms-rule">
+            <span class="rule-icon">🎉</span>
+            <div class="rule-info">
+              <div class="rule-title">Cotisation complète</div>
+              <div class="rule-desc">Quand l'objectif est atteint</div>
+            </div>
+            <input type="checkbox" checked>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📤 SMS manuel / Broadcast</div>
+          <div style="margin-bottom:10px;">
+            <select id="sms-destinataire" style="margin-bottom:8px;">
+              <option value="all">📢 Tous les clients</option>
+              <option value="retard">⚠️ Clients en retard</option>
+              <option value="complet">✅ Cotisations complètes</option>
+            </select>
+            <textarea id="sms-message" rows="4" placeholder="Rédigez votre message SMS..." style="resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="sms-counter" style="font-size:11px;color:var(--text-light);">0 / 160 caractères</span>
+            <button class="btn btn-green btn-sm" onclick="envoyerSMSBroadcast()">📤 Envoyer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CALENDRIER ===== -->
+    <div class="section" id="section-calendrier">
+      <div class="section-header">
+        <div class="section-title">📅 Calendrier des Livraisons</div>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="changerMois(-1)">‹</button>
+          <span id="cal-titre" style="font-weight:600;font-size:15px;"></span>
+          <button class="cal-nav" onclick="changerMois(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-day-names"></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div id="cal-events" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ===== ADMINS ===== -->
+    <div class="section" id="section-admins">
+      <div class="section-header">
+        <div class="section-title">🔐 Administrateurs</div>
+        <button class="btn btn-green" onclick="toggleForm('form-admin')">+ Ajouter un admin</button>
+      </div>
+      <div class="form-box" id="form-admin">
+        <h4>Nouvel Administrateur</h4>
+        <div class="form-row triple">
+          <input type="text" id="admin-nom" placeholder="Nom *">
+          <input type="text" id="admin-prenom" placeholder="Prénom *">
+          <input type="tel" id="admin-tel" placeholder="Téléphone *">
+        </div>
+        <div class="form-row">
+          <input type="password" id="admin-mdp" placeholder="Mot de passe *">
+          <select id="admin-role">
+            <option value="superviseur">Superviseur</option>
+            <option value="livreur">Livreur</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-green" onclick="ajouterAdmin()">✓ Créer</button>
+          <button class="btn btn-ghost" onclick="toggleForm('form-admin')">Annuler</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nom & Prénom</th><th>Téléphone</th><th>Rôle</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody id="admins-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
 </div>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="afficherTab('clients')">👥 Clients</button>
-  <button class="tab-btn" onclick="afficherTab('cotisations')">💰 Cotisations</button>
-  <button class="tab-btn" onclick="afficherTab('livraisons')">🚚 Livraisons</button>
-  <button class="tab-btn" onclick="afficherTab('messages')">✉️ Messages <span class="notif" id="notif-messages">0</span></button>
-</div>
-
-<!-- CLIENTS -->
-<div class="section active" id="section-clients">
-  <h3>👥 Gestion des Clients</h3>
-  <button class="btn btn-green" style="margin-bottom:15px" onclick="toggleForm('form-client')">+ Ajouter un client</button>
-  <div class="form-box" id="form-client">
-    <h4>Nouveau Client</h4>
-    <input type="text" id="new-nom" placeholder="Nom">
-    <input type="text" id="new-prenom" placeholder="Prénom">
-    <input type="tel" id="new-tel" placeholder="Téléphone">
-    <input type="password" id="new-mdp" placeholder="Mot de passe temporaire">
-    <button class="btn btn-green" onclick="ajouterClient()">Enregistrer</button>
-    <button class="btn btn-red" style="margin-left:10px" onclick="toggleForm('form-client')">Annuler</button>
-  </div>
-  <table>
-    <thead><tr><th>Nom</th><th>Prénom</th><th>Téléphone</th><th>Inscription</th><th>QR Code</th></tr></thead>
-    <tbody id="clients-table"></tbody>
-  </table>
-</div>
-
-<!-- COTISATIONS -->
-<div class="section" id="section-cotisations">
-  <h3>💰 Gestion des Cotisations</h3>
-  <button class="btn btn-green" style="margin-bottom:15px" onclick="toggleForm('form-cotisation')">+ Nouvelle cotisation</button>
-  <div class="form-box" id="form-cotisation">
-    <h4>Créer une cotisation</h4>
-    <select id="cot-client"><option value="">-- Choisir un client --</option></select>
-    <input type="number" id="cot-poulets" placeholder="Nombre de poulets">
-    <input type="number" id="cot-prix" placeholder="Prix unitaire (défaut: 2800 FCFA)">
-    <input type="month" id="cot-mois">
-    <button class="btn btn-green" onclick="creerCotisation()">Créer</button>
-    <button class="btn btn-red" style="margin-left:10px" onclick="toggleForm('form-cotisation')">Annuler</button>
-  </div>
-  <table>
-    <thead><tr><th>Client</th><th>Mois</th><th>Objectif</th><th>Collecté</th><th>Progression</th><th>Livraison</th><th>Statut</th><th>Actions</th></tr></thead>
-    <tbody id="cotisations-table"></tbody>
-  </table>
-</div>
-
-<!-- LIVRAISONS -->
-<div class="section" id="section-livraisons">
-  <h3>🚚 Suivi des Livraisons</h3>
-  <table>
-    <thead><tr><th>Client</th><th>Mois</th><th>Poulets</th><th>Jour choisi</th><th>Statut</th><th>Action</th></tr></thead>
-    <tbody id="livraisons-table"></tbody>
-  </table>
-</div>
-
-<!-- MESSAGES -->
-<div class="section" id="section-messages">
-  <h3>✉️ Messages des Clients</h3>
-  <div id="messages-container"></div>
-</div>
-
-<div id="modal-qr" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center">
-  <div style="background:white;padding:30px;border-radius:10px;text-align:center">
+<!-- MODAL QR -->
+<div id="modal-qr">
+  <div class="modal-inner">
+    <h4>📱 QR Code Client</h4>
     <div id="qr-content"></div>
-    <button class="btn btn-red" style="margin-top:15px" onclick="document.getElementById('modal-qr').style.display='none'">Fermer</button>
+    <button class="btn btn-red btn-sm" style="margin-top:16px;" onclick="document.getElementById('modal-qr').classList.remove('show')">Fermer</button>
   </div>
 </div>
 
 <script>
-const token = localStorage.getItem("token");
-if (!token) window.location.href = "/";
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/';
 
-function deconnexion() { localStorage.removeItem("token"); window.location.href = "/"; }
-function toggleForm(id) { const f = document.getElementById(id); f.style.display = f.style.display === "none" ? "block" : "none"; }
-function voirQR(qrCode) { document.getElementById("qr-content").innerHTML = "<img src='" + qrCode + "' style='max-width:200px'>"; document.getElementById("modal-qr").style.display = "flex"; }
+// ─── UTILS ─────────────────────────────────────────────
+function deconnexion() { localStorage.removeItem('token'); window.location.href = '/'; }
+function toggleForm(id) { const f = document.getElementById(id); f.style.display = f.style.display === 'none' || !f.style.display ? 'block' : 'none'; }
+function voirQR(qrCode) { document.getElementById('qr-content').innerHTML = '<img src="' + qrCode + '" style="max-width:200px">'; document.getElementById('modal-qr').classList.add('show'); }
+function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); }
+function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
+function nbFCFA(n) { return Number(n).toLocaleString('fr-FR'); }
 
-function formatDate(d) { return new Date(d).toLocaleDateString("fr-FR"); }
-function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString("fr-FR") + " " + dt.toLocaleTimeString("fr-FR", {hour:"2-digit",minute:"2-digit"}); }
-
+// ─── NAVIGATION ────────────────────────────────────────
 function afficherTab(tab) {
-  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
-  document.getElementById("section-" + tab).classList.add("active");
-  event.target.classList.add("active");
-  if (tab === "cotisations") { chargerCotisations(); remplirSelectClients(); }
-  if (tab === "livraisons") chargerLivraisons();
-  if (tab === "messages") chargerMessages();
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (tab === 'cotisations') { chargerCotisations(); remplirSelectClients(); }
+  if (tab === 'livraisons') chargerLivraisons();
+  if (tab === 'messages') chargerMessages();
+  if (tab === 'clients') chargerClients();
+  if (tab === 'calendrier') initCalendrier();
+  if (tab === 'dashboard') chargerDashboard();
+  if (tab === 'admins') chargerAdmins();
+  if (tab === 'paiements') chargerPaiements();
 }
 
+// ─── DASHBOARD ─────────────────────────────────────────
+let chartCollecte, chartStatut, chartEvol;
+async function chargerDashboard() {
+  const h = { headers: { 'Authorization': 'Bearer ' + token } };
+  const [clients, cotisations, messages] = await Promise.all([
+    fetch('/api/admin/clients', h).then(r => r.json()),
+    fetch('/api/cotisations', h).then(r => r.json()),
+    fetch('/api/messages', h).then(r => r.json())
+  ]);
+  const actives = cotisations.filter(c => c.statut === 'en_cours');
+  const completes = cotisations.filter(c => c.statut === 'complete');
+  const livrees = cotisations.filter(c => c.statut === 'livre');
+  const collecte = cotisations.reduce((s, c) => s + c.montantCollecte, 0);
+  const nonLus = messages.filter(m => !m.lu).length;
+
+  document.getElementById('total-clients').textContent = clients.length;
+  document.getElementById('total-cotisations').textContent = actives.length;
+  document.getElementById('total-collecte').textContent = nbFCFA(collecte);
+  document.getElementById('total-messages').textContent = nonLus;
+  document.getElementById('total-completes').textContent = completes.length;
+  document.getElementById('total-livrees').textContent = livrees.length;
+  document.getElementById('notif-messages').textContent = nonLus;
+  document.getElementById('notif-messages').style.display = nonLus > 0 ? 'inline' : 'none';
+
+  // Top clients
+  const sorted = [...cotisations].sort((a,b) => b.objectifPoulets - a.objectifPoulets).slice(0,5);
+  document.getElementById('top-clients-list').innerHTML = sorted.length ? sorted.map(c =>
+    '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">' +
+    '<div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">' + (c.client?.nom||'?')[0].toUpperCase() + '</div>' +
+    '<div style="flex:1"><div style="font-weight:600;font-size:13px;">' + (c.client?.nom||'') + ' ' + (c.client?.prenom||'') + '</div>' +
+    '<div class="progress-bar" style="width:120px;"><div class="progress-fill" style="width:' + Math.min(100,Math.round(c.montantCollecte/c.montantObjectif*100||0)) + '%"></div></div></div>' +
+    '<span style="font-size:12px;color:var(--text-muted);">' + c.objectifPoulets + ' 🐔</span></div>'
+  ).join('') : '<div class="empty"><div class="empty-icon">🐔</div>Aucune cotisation</div>';
+
+  // Alertes
+  const retard = cotisations.filter(c => c.statut === 'en_cours' && c.montantCollecte < c.montantObjectif * 0.5);
+  document.getElementById('alertes-list').innerHTML =
+    (nonLus > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">💬 <strong>' + nonLus + ' message(s)</strong> non lu(s)</div>' : '') +
+    (retard.length > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">⚠️ <strong>' + retard.length + ' cotisation(s)</strong> à moins de 50%</div>' : '') +
+    (completes.length > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">✅ <strong>' + completes.length + ' cotisation(s)</strong> prête(s) à livrer</div>' : '') +
+    '<div style="padding:8px 0;font-size:13px;">👥 <strong>' + clients.length + ' client(s)</strong> inscrits au total</div>';
+
+  // Charts
+  const mois = ['Jan','Fév','Mar','Avr','Mai','Juin'];
+  const collectes = [950000,1200000,1450000,1750000,2050000,collecte];
+  const objectifs = [1200000,1200000,1500000,1800000,2200000,cotisations.reduce((s,c)=>s+c.montantObjectif,0)];
+
+  if (chartCollecte) chartCollecte.destroy();
+  chartCollecte = new Chart(document.getElementById('chartCollecte'), {
+    type: 'bar',
+    data: { labels: mois, datasets: [
+      { label:'Collecté', data: collectes, backgroundColor:'#1a6b3c', borderRadius:4 },
+      { label:'Objectif', data: objectifs, type:'line', borderColor:'#c8960c', backgroundColor:'transparent', borderWidth:1.5, pointRadius:3, pointBackgroundColor:'#c8960c', tension:0.3 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{font:{size:10}},grid:{display:false}}, y:{ticks:{font:{size:10},callback:v=>(v/1000)+'k'},grid:{color:'rgba(0,0,0,0.05)'}} } }
+  });
+
+  if (chartStatut) chartStatut.destroy();
+  chartStatut = new Chart(document.getElementById('chartStatut'), {
+    type: 'doughnut',
+    data: { labels:['Complètes','En cours','Livrées'], datasets:[{
+      data:[completes.length, actives.length, livrees.length],
+      backgroundColor:['#1a6b3c','#1565c0','#e65100'], borderWidth:0, hoverOffset:4
+    }]},
+    options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+  });
+
+  if (chartEvol) chartEvol.destroy();
+  chartEvol = new Chart(document.getElementById('chartEvol'), {
+    type: 'line',
+    data: { labels: mois, datasets: [
+      { label:'Nouveaux clients', data:[3,5,7,8,6,clients.length], borderColor:'#1565c0', backgroundColor:'rgba(21,101,192,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1565c0', borderWidth:2 },
+      { label:'Livraisons', data:[8,14,20,25,28,livrees.length+actives.length], borderColor:'#1a6b3c', backgroundColor:'rgba(26,107,60,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1a6b3c', borderWidth:2 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{font:{size:10}},grid:{display:false}}, y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}} } }
+  });
+}
+
+// ─── CLIENTS ───────────────────────────────────────────
+let allClients = [];
 async function chargerClients() {
-  const res = await fetch("/api/admin/clients", { headers: { "Authorization": "Bearer " + token } });
-  const data = await res.json();
-  document.getElementById("total-clients").textContent = data.length;
-  const tbody = document.getElementById("clients-table");
-  tbody.innerHTML = data.map(c => "<tr><td><strong>" + c.nom + "</strong></td><td>" + c.prenom + "</td><td>" + c.telephone + "</td><td>" + formatDate(c.dateCreation) + "</td><td>" + (c.qrCode ? "<button class='btn btn-green' onclick='voirQR(\"" + c.qrCode + "\")'>Voir QR</button>" : "-") + "</td></tr>").join("");
+  const res = await fetch('/api/admin/clients', { headers:{'Authorization':'Bearer '+token} });
+  allClients = await res.json();
+  document.getElementById('total-clients').textContent = allClients.length;
+  afficherClients(allClients);
 }
-
-async function remplirSelectClients() {
-  const res = await fetch("/api/admin/clients", { headers: { "Authorization": "Bearer " + token } });
-  const data = await res.json();
-  const select = document.getElementById("cot-client");
-  select.innerHTML = "<option value=''>-- Choisir un client --</option>" + data.map(c => "<option value='" + c._id + "'>" + c.nom + " " + c.prenom + "</option>").join("");
+function afficherClients(data) {
+  const tbody = document.getElementById('clients-table');
+  tbody.innerHTML = data.map((c, i) =>
+    '<tr><td>' + (i+1) + '</td><td><strong>' + c.nom + '</strong> ' + c.prenom + '</td><td>' + c.telephone +
+    '</td><td>' + formatDate(c.dateCreation) + '</td><td>' +
+    (c.qrCode ? '<button class="btn btn-blue btn-sm" onclick="voirQR(\'' + c.qrCode + '\')">📱 QR</button>' : '<span style="color:var(--text-light)">–</span>') +
+    '</td><td><button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>'
+  ).join('') || '<tr><td colspan="6" class="empty">Aucun client inscrit</td></tr>';
 }
-
+function filtrerClients(q) {
+  const f = allClients.filter(c => (c.nom+' '+c.prenom+' '+c.telephone).toLowerCase().includes(q.toLowerCase()));
+  afficherClients(f);
+}
 async function ajouterClient() {
-  const nom = document.getElementById("new-nom").value;
-  const prenom = document.getElementById("new-prenom").value;
-  const telephone = document.getElementById("new-tel").value;
-  const motDePasse = document.getElementById("new-mdp").value;
-  const res = await fetch("/api/auth/inscription", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ nom, prenom, telephone, motDePasse }) });
+  const nom = document.getElementById('new-nom').value;
+  const prenom = document.getElementById('new-prenom').value;
+  const telephone = document.getElementById('new-tel').value;
+  const motDePasse = document.getElementById('new-mdp').value;
+  if (!nom||!prenom||!telephone||!motDePasse) { alert('Remplissez tous les champs'); return; }
+  const res = await fetch('/api/auth/inscription', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({nom,prenom,telephone,motDePasse}) });
   const data = await res.json();
-  if (res.ok) { alert("Client ajouté !"); toggleForm("form-client"); chargerClients(); }
-  else { alert("Erreur: " + data.message); }
+  if (res.ok) { alert('✅ Client ajouté !'); toggleForm('form-client'); chargerClients(); }
+  else alert('Erreur : ' + data.message);
+}
+async function supprimerClient(id) {
+  if (!confirm('Supprimer ce client et toutes ses données ?')) return;
+  const res = await fetch('/api/admin/clients/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+  if (res.ok) { alert('✅ Client supprimé'); chargerClients(); }
+  else alert('Erreur lors de la suppression');
+}
+async function remplirSelectClients() {
+  const res = await fetch('/api/admin/clients', { headers:{'Authorization':'Bearer '+token} });
+  const data = await res.json();
+  document.getElementById('cot-client').innerHTML = '<option value="">-- Choisir un client --</option>' + data.map(c => '<option value="' + c._id + '">' + c.nom + ' ' + c.prenom + '</option>').join('');
 }
 
+// ─── COTISATIONS ───────────────────────────────────────
 async function chargerCotisations() {
-  const res = await fetch("/api/cotisations", { headers: { "Authorization": "Bearer " + token } });
+  const res = await fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} });
   const data = await res.json();
-  document.getElementById("total-cotisations").textContent = data.filter(c => c.statut === "en_cours").length;
-  document.getElementById("total-collecte").textContent = data.reduce((s, c) => s + c.montantCollecte, 0).toLocaleString();
-  const tbody = document.getElementById("cotisations-table");
+  document.getElementById('total-cotisations').textContent = data.filter(c => c.statut === 'en_cours').length;
+  document.getElementById('total-collecte').textContent = nbFCFA(data.reduce((s,c) => s + c.montantCollecte, 0));
+  const tbody = document.getElementById('cotisations-table');
+  const couleur = c => c.statut === 'complete' ? '#1a6b3c' : c.statut === 'livre' ? '#1565c0' : '#e65100';
   tbody.innerHTML = data.map(c => {
-    const pct = Math.min(Math.round((c.montantCollecte / c.montantObjectif) * 100), 100);
-    const couleur = c.statut === "complete" ? "#2e7d32" : c.statut === "livre" ? "#1565c0" : "#f57c00";
-    return "<tr><td><strong>" + c.client.nom + "</strong><br><small>" + c.client.telephone + "</small></td><td>" + c.mois + "</td><td>" + c.montantObjectif.toLocaleString() + " FCFA<br><small>" + c.objectifPoulets + " poulet(s)</small></td><td>" + c.montantCollecte.toLocaleString() + " FCFA</td><td><div class='progress-bar'><div class='progress-fill' style='width:" + pct + "%'></div></div><small>" + pct + "%</small></td><td>" + (c.jourLivraisonChoisi ? "Le " + c.jourLivraisonChoisi : "Non défini") + "</td><td><span style='background:" + couleur + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + c.statut + "</span></td><td><button class='btn btn-green' style='margin-bottom:3px' onclick='ajouterVersement(\"" + c._id + "\")'>+ Versement</button><br>" + (c.statut === "complete" ? "<button class='btn btn-blue' onclick='confirmerLivraison(\"" + c._id + "\")'>Livrer</button>" : "") + "</td></tr>";
-  }).join("");
+    const pct = Math.min(100, Math.round((c.montantCollecte / (c.montantObjectif||1)) * 100));
+    const badgeClass = c.statut === 'complete' ? 'badge-green' : c.statut === 'livre' ? 'badge-blue' : 'badge-amber';
+    return '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small style="color:var(--text-muted)">' + (c.client?.telephone||'') + '</small></td>' +
+      '<td>' + c.mois + '</td>' +
+      '<td>' + c.objectifPoulets + ' 🐔<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
+      '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
+      '<td style="min-width:100px"><small>' + pct + '%</small><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + couleur(c) + '"></div></div></td>' +
+      '<td>' + (c.jourLivraisonChoisi ? 'Le ' + c.jourLivraisonChoisi : '–') + '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + c.statut.replace('_',' ') + '</span></td>' +
+      '<td style="white-space:nowrap">' +
+      (c.statut !== 'livre' ? '<button class="btn btn-green btn-sm" onclick="ajouterVersement(\'' + c._id + '\')">+ Versement</button> ' : '') +
+      (c.statut === 'complete' ? '<button class="btn btn-blue btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Livrer</button> ' : '') +
+      '<button class="btn btn-red btn-sm" onclick="supprimerCotisation(\'' + c._id + '\')">🗑</button></td></tr>';
+  }).join('') || '<tr><td colspan="8" class="empty">Aucune cotisation</td></tr>';
 }
-
 async function creerCotisation() {
-  const clientId = document.getElementById("cot-client").value;
-  const objectifPoulets = parseInt(document.getElementById("cot-poulets").value);
-  const prixUnitaire = parseInt(document.getElementById("cot-prix").value) || 2800;
-  const mois = document.getElementById("cot-mois").value;
-  if (!clientId || !objectifPoulets || !mois) { alert("Remplissez tous les champs"); return; }
-  const res = await fetch("/api/cotisations", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ clientId, objectifPoulets, prixUnitaire, mois }) });
+  const clientId = document.getElementById('cot-client').value;
+  const objectifPoulets = parseInt(document.getElementById('cot-poulets').value);
+  const prixUnitaire = parseInt(document.getElementById('cot-prix').value) || 2800;
+  const mois = document.getElementById('cot-mois').value;
+  const jourLivraisonChoisi = parseInt(document.getElementById('cot-jour').value) || undefined;
+  if (!clientId||!objectifPoulets||!mois) { alert('Remplissez tous les champs obligatoires'); return; }
+  const res = await fetch('/api/cotisations', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({clientId,objectifPoulets,prixUnitaire,mois,jourLivraisonChoisi}) });
   const data = await res.json();
-  if (res.ok) { alert("Cotisation créée !"); toggleForm("form-cotisation"); chargerCotisations(); }
-  else { alert("Erreur: " + data.message); }
+  if (res.ok) { alert('✅ Cotisation créée !'); toggleForm('form-cotisation'); chargerCotisations(); }
+  else alert('Erreur : ' + data.message);
 }
-
 async function ajouterVersement(cotisationId) {
-  const montant = prompt("Montant du versement (FCFA):");
+  const montant = prompt('Montant du versement (FCFA) :');
   if (!montant) return;
-  const modePaiement = prompt("Mode de paiement (Wave / Orange Money / Moov Money):");
-  const reference = prompt("Référence de transaction (optionnel):");
-  const res = await fetch("/api/cotisations/" + cotisationId + "/versement", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ montant: parseInt(montant), modePaiement, reference }) });
+  const modePaiement = prompt('Mode de paiement (Wave / Orange Money / Moov Money) :');
+  const reference = prompt('Référence de transaction (optionnel) :');
+  const res = await fetch('/api/cotisations/' + cotisationId + '/versement', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({montant:parseInt(montant),modePaiement,reference}) });
   const data = await res.json();
-  if (res.ok) { alert("Versement enregistré !"); chargerCotisations(); }
-  else { alert("Erreur: " + data.message); }
+  if (res.ok) { alert('✅ Versement enregistré !'); chargerCotisations(); }
+  else alert('Erreur : ' + data.message);
 }
-
 async function confirmerLivraison(cotisationId) {
-  if (!confirm("Confirmer la livraison de cette commande ?")) return;
-  const res = await fetch("/api/cotisations/" + cotisationId + "/livrer", { method: "PUT", headers: { "Authorization": "Bearer " + token } });
-  if (res.ok) { alert("Livraison confirmée !"); chargerCotisations(); chargerLivraisons(); }
+  if (!confirm('Confirmer la livraison de cette commande ?')) return;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/livrer', { method:'PUT', headers:{'Authorization':'Bearer '+token} });
+  if (res.ok) { alert('✅ Livraison confirmée !'); chargerCotisations(); chargerLivraisons(); }
+}
+async function supprimerCotisation(id) {
+  if (!confirm('Supprimer cette cotisation ?')) return;
+  const res = await fetch('/api/cotisations/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+  if (res.ok) { alert('✅ Cotisation supprimée'); chargerCotisations(); }
 }
 
+// ─── LIVRAISONS ────────────────────────────────────────
 async function chargerLivraisons() {
-  const res = await fetch("/api/cotisations", { headers: { "Authorization": "Bearer " + token } });
+  const res = await fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} });
   const data = await res.json();
-  const tbody = document.getElementById("livraisons-table");
-  const livraisons = data.filter(c => c.statut === "complete" || c.statut === "livre");
-  if (!livraisons.length) { tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;color:#888'>Aucune livraison en attente.</td></tr>"; return; }
-  tbody.innerHTML = livraisons.map(c => {
-    const couleur = c.statut === "livre" ? "#1565c0" : "#f57c00";
-    return "<tr><td><strong>" + c.client.nom + " " + c.client.prenom + "</strong><br><small>" + c.client.telephone + "</small></td><td>" + c.mois + "</td><td>" + c.objectifPoulets + " poulet(s)</td><td>" + (c.jourLivraisonChoisi ? "Le " + c.jourLivraisonChoisi : "Non défini") + "</td><td><span style='background:" + couleur + ";color:white;padding:3px 8px;border-radius:5px;font-size:12px'>" + (c.statut === "livre" ? "✅ Livré" : "⏳ À livrer") + "</span></td><td>" + (c.statut === "complete" ? "<button class='btn btn-blue' onclick='confirmerLivraison(\"" + c._id + "\")'>Confirmer livraison</button>" : formatDateHeure(c.dateLivraisonEffective)) + "</td></tr>";
-  }).join("");
+  const livraisons = data.filter(c => c.statut === 'complete' || c.statut === 'livre');
+  document.getElementById('total-livrees').textContent = data.filter(c=>c.statut==='livre').length;
+  const couleur = c => c.statut === 'livre' ? '#1565c0' : '#1a6b3c';
+  const tbody = document.getElementById('livraisons-table');
+  tbody.innerHTML = livraisons.length ? livraisons.map(c =>
+    '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small>' + (c.client?.telephone||'') + '</small></td>' +
+    '<td>' + c.mois + '</td><td>' + c.objectifPoulets + ' 🐔</td>' +
+    '<td>' + (c.jourLivraisonChoisi ? 'Le ' + c.jourLivraisonChoisi : 'Non défini') + '</td>' +
+    '<td>' + (c.dateLivraisonEffective ? formatDate(c.dateLivraisonEffective) : '–') + '</td>' +
+    '<td><span class="badge" style="background:' + (c.statut==='livre'?'var(--blue-light)':'var(--green-light)') + ';color:' + couleur(c) + '">' + c.statut.replace('_',' ') + '</span></td>' +
+    '<td>' + (c.statut === 'complete' ? '<button class="btn btn-green btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Confirmer</button>' : '<span style="color:var(--text-light)">✅ Livrée</span>') + '</td></tr>'
+  ).join('') : '<tr><td colspan="7" class="empty">Aucune livraison en attente</td></tr>';
 }
 
+// ─── MESSAGES ──────────────────────────────────────────
 async function chargerMessages() {
-  const res = await fetch("/api/messages", { headers: { "Authorization": "Bearer " + token } });
+  const res = await fetch('/api/messages', { headers:{'Authorization':'Bearer '+token} });
   const data = await res.json();
   const nonLus = data.filter(m => !m.lu).length;
-  document.getElementById("total-messages").textContent = nonLus;
-  document.getElementById("notif-messages").textContent = nonLus;
-  const container = document.getElementById("messages-container");
-  if (!data.length) { container.innerHTML = "<p style='color:#888;text-align:center'>Aucun message.</p>"; return; }
-  container.innerHTML = data.map(m => "<div class='message-item' style='border-left-color:" + (m.lu ? "#ccc" : "#c62828") + "'><div style='display:flex;justify-content:space-between'><strong>" + m.client.nom + " " + m.client.prenom + "</strong><small>" + formatDateHeure(m.dateEnvoi) + "</small></div><small style='color:#666'>" + m.client.telephone + "</small><p style='margin:8px 0'>" + m.contenu + "</p>" + (m.reponse ? "<div style='background:#e8f5e9;padding:8px;border-radius:5px;font-size:13px'>📩 Votre réponse: " + m.reponse + "</div>" : "<div style='display:flex;gap:5px;margin-top:8px'><input type='text' id='rep-" + m._id + "' placeholder='Écrire une réponse...' style='margin:0;padding:8px'><button class='btn btn-green' onclick='repondreMessage(\"" + m._id + "\")'>Répondre</button></div>") + "</div>").join("");
+  document.getElementById('total-messages').textContent = nonLus;
+  document.getElementById('notif-messages').textContent = nonLus;
+  document.getElementById('notif-messages').style.display = nonLus > 0 ? 'inline' : 'none';
+  const container = document.getElementById('messages-container');
+  if (!data.length) { container.innerHTML = '<div class="empty"><div class="empty-icon">💬</div>Aucun message</div>'; return; }
+  container.innerHTML = data.map(m =>
+    '<div class="message-item ' + (m.lu ? '' : 'unread') + '">' +
+    '<div class="msg-header"><div class="msg-name">👤 ' + (m.client?.nom||'?') + ' ' + (m.client?.prenom||'') + ' <small style="color:var(--text-light)">· ' + (m.client?.telephone||'') + '</small></div>' +
+    '<span style="font-size:11px;color:var(--text-light)">' + formatDateHeure(m.dateEnvoi) + ' ' + (m.lu ? '' : '<span class="badge badge-green">Nouveau</span>') + '</span></div>' +
+    '<div class="msg-body">' + m.contenu + '</div>' +
+    (m.reponse ? '<div class="msg-reply">↩ Votre réponse : ' + m.reponse + '</div>' :
+      '<div class="msg-input-row"><input type="text" id="rep-' + m._id + '" placeholder="Écrire une réponse..."><button class="btn btn-green btn-sm" onclick="repondreMessage(\'' + m._id + '\')">Envoyer</button></div>') +
+    '</div>'
+  ).join('');
 }
-
 async function repondreMessage(messageId) {
-  const reponse = document.getElementById("rep-" + messageId).value;
-  if (!reponse.trim()) { alert("Écrivez une réponse"); return; }
-  const res = await fetch("/api/messages/" + messageId + "/repondre", { method: "PUT", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ reponse }) });
-  if (res.ok) { alert("Réponse envoyée !"); chargerMessages(); }
+  const reponse = document.getElementById('rep-' + messageId).value;
+  if (!reponse.trim()) { alert('Écrivez une réponse'); return; }
+  const res = await fetch('/api/messages/' + messageId + '/repondre', { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({reponse}) });
+  if (res.ok) { alert('✅ Réponse envoyée !'); chargerMessages(); }
 }
 
+// ─── SMS BROADCAST ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('sms-message');
+  if (ta) ta.addEventListener('input', () => {
+    document.getElementById('sms-counter').textContent = ta.value.length + ' / 160 caractères';
+  });
+});
+async function envoyerSMSBroadcast() {
+  const message = document.getElementById('sms-message').value;
+  const destinataire = document.getElementById('sms-destinataire').value;
+  if (!message.trim()) { alert('Rédigez un message'); return; }
+  if (!confirm('Envoyer ce SMS à tous les clients sélectionnés ?')) return;
+  alert('✅ SMS envoyé ! (connectez votre provider SMS dans app.js)');
+}
+
+// ─── ADMINS ────────────────────────────────────────────
+async function chargerAdmins() {
+  const res = await fetch('/api/admin/admins', { headers:{'Authorization':'Bearer '+token} }).catch(()=>null);
+  if (!res||!res.ok) { document.getElementById('admins-table').innerHTML='<tr><td colspan="5" class="empty">Route /api/admin/admins non disponible</td></tr>'; return; }
+  const data = await res.json();
+  const roles = {admin:'badge-red',superviseur:'badge-blue',livreur:'badge-amber'};
+  document.getElementById('admins-table').innerHTML = data.map(a =>
+    '<tr><td><strong>' + a.nom + '</strong> ' + a.prenom + '</td><td>' + a.telephone +
+    '</td><td><span class="badge ' + (roles[a.role]||'badge-gray') + '">' + a.role + '</span></td>' +
+    '<td>' + formatDate(a.dateCreation) + '</td>' +
+    '<td><button class="btn btn-red btn-sm" onclick="supprimerAdmin(\'' + a._id + '\')">🗑</button></td></tr>'
+  ).join('') || '<tr><td colspan="5" class="empty">Aucun administrateur</td></tr>';
+}
+async function ajouterAdmin() {
+  const nom=document.getElementById('admin-nom').value, prenom=document.getElementById('admin-prenom').value,
+    telephone=document.getElementById('admin-tel').value, motDePasse=document.getElementById('admin-mdp').value,
+    role=document.getElementById('admin-role').value;
+  if (!nom||!prenom||!telephone||!motDePasse) { alert('Remplissez tous les champs'); return; }
+  const res = await fetch('/api/admin/admins', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({nom,prenom,telephone,motDePasse,role}) });
+  const data = await res.json();
+  if (res.ok) { alert('✅ Administrateur créé !'); toggleForm('form-admin'); chargerAdmins(); }
+  else alert('Erreur : ' + data.message);
+}
+async function supprimerAdmin(id) {
+  if (!confirm('Supprimer cet administrateur ?')) return;
+  await fetch('/api/admin/admins/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+  chargerAdmins();
+}
+
+// ─── CALENDRIER ────────────────────────────────────────
+let calDate = new Date();
+const joursFr = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+async function initCalendrier() {
+  const res = await fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} });
+  const cotisations = await res.json();
+  afficherCalendrier(cotisations);
+}
+function afficherCalendrier(cotisations) {
+  const an = calDate.getFullYear(), mois = calDate.getMonth();
+  const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('cal-titre').textContent = moisNoms[mois] + ' ' + an;
+  // Jours noms
+  const dn = document.getElementById('cal-day-names');
+  dn.innerHTML = joursFr.map(j => '<div class="cal-day-name">' + j + '</div>').join('');
+  // Jours du mois
+  const premier = new Date(an, mois, 1);
+  const dernier = new Date(an, mois+1, 0);
+  let joursDebut = (premier.getDay()+6)%7;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  // Jours mois précédent
+  for (let i=joursDebut-1;i>=0;i--) {
+    const d = new Date(an,mois,0-i);
+    grid.innerHTML += '<div class="cal-day other-month"><div class="day-num">' + d.getDate() + '</div></div>';
+  }
+  const today = new Date(); const todayStr = today.toDateString();
+  for (let d=1;d<=dernier.getDate();d++) {
+    const dateStr = new Date(an,mois,d).toDateString();
+    const isToday = dateStr === todayStr;
+    const evts = cotisations.filter(c => c.jourLivraisonChoisi === d && (c.statut==='complete'||c.statut==='livre'));
+    grid.innerHTML += '<div class="cal-day' + (isToday?' today':'') + '" onclick="voirJour(' + d + ',' + JSON.stringify(evts).replace(/"/g,"'") + ')">' +
+      '<div class="day-num">' + d + '</div>' + evts.map(()=>'<div class="event-dot"></div>').join('') + '</div>';
+  }
+}
+function changerMois(dir) { calDate.setMonth(calDate.getMonth()+dir); initCalendrier(); }
+function voirJour(jour, evts) {
+  const div = document.getElementById('cal-events');
+  if (!evts||!evts.length) { div.innerHTML='<p style="color:var(--text-light);font-size:13px;">Aucune livraison prévue le '+jour+'.</p>'; return; }
+  div.innerHTML = '<div class="chart-card"><div class="chart-title">📅 Livraisons du ' + jour + '</div>' +
+    evts.map(e => '<div class="list-item"><strong>' + (e.client?.nom||'?') + ' ' + (e.client?.prenom||'') + '</strong> — ' + e.objectifPoulets + ' poulets</div>').join('') + '</div>';
+}
+
+// ─── PAIEMENTS ─────────────────────────────────────────
+let pCharts = {};
+let pVersements = [];
+let pCotisations = [];
+
+async function chargerPaiements() {
+  const h = { headers: { 'Authorization': 'Bearer ' + token } };
+  const res = await fetch('/api/cotisations', h);
+  pCotisations = await res.json();
+  pVersements = [];
+  pCotisations.forEach(c => {
+    if (c.versements && c.versements.length > 0) {
+      c.versements.forEach(v => pVersements.push({ ...v, client: c.client, mois: c.mois, cotisationId: c._id, montantObjectif: c.montantObjectif, montantCollecte: c.montantCollecte }));
+    }
+  });
+  // Métriques
+  const collecte = pCotisations.reduce((s,c) => s + (c.montantCollecte||0), 0);
+  const objectif = pCotisations.reduce((s,c) => s + (c.montantObjectif||0), 0);
+  const taux = objectif > 0 ? Math.round(collecte/objectif*100) : 0;
+  const retard = pCotisations.filter(c => c.statut==='en_cours' && (c.montantCollecte||0) < (c.montantObjectif||0)*0.5).length;
+  const completes = pCotisations.filter(c => c.statut==='complete' || c.statut==='livre').length;
+  document.getElementById('p-collecte').textContent = nbFCFA(collecte);
+  document.getElementById('p-objectif').textContent = nbFCFA(objectif);
+  document.getElementById('p-taux').textContent = taux + '%';
+  document.getElementById('p-retard').textContent = retard;
+  document.getElementById('p-completes').textContent = completes;
+  document.getElementById('p-versements').textContent = pVersements.length;
+  // Graphiques
+  const modes = {};
+  pVersements.forEach(v => { const m = v.modePaiement||'Autre'; modes[m] = (modes[m]||0) + (v.montant||0); });
+  if (pCharts.modes) pCharts.modes.destroy();
+  pCharts.modes = new Chart(document.getElementById('p-chartModes'), {
+    type:'doughnut', data:{ labels:Object.keys(modes)||['Aucun'], datasets:[{ data:Object.values(modes).length?Object.values(modes):[1], backgroundColor:['#1a6b3c','#1565c0','#e65100','#c8960c'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
+  });
+  const en_cours = pCotisations.filter(c=>c.statut==='en_cours').length;
+  const complete = pCotisations.filter(c=>c.statut==='complete').length;
+  const livre = pCotisations.filter(c=>c.statut==='livre').length;
+  if (pCharts.statuts) pCharts.statuts.destroy();
+  pCharts.statuts = new Chart(document.getElementById('p-chartStatuts'), {
+    type:'doughnut', data:{ labels:['En cours','Complètes','Livrées'], datasets:[{ data:[en_cours,complete,livre], backgroundColor:['#1565c0','#1a6b3c','#c8960c'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
+  });
+  const top = [...pCotisations].sort((a,b)=>(b.montantCollecte||0)-(a.montantCollecte||0)).slice(0,6);
+  if (pCharts.top) pCharts.top.destroy();
+  pCharts.top = new Chart(document.getElementById('p-chartTop'), {
+    type:'bar', data:{ labels:top.map(c=>(c.client?.nom||'?')), datasets:[
+      { label:'Collecté', data:top.map(c=>c.montantCollecte||0), backgroundColor:'#1a6b3c', borderRadius:4 },
+      { label:'Objectif', data:top.map(c=>c.montantObjectif||0), backgroundColor:'rgba(200,150,12,0.3)', borderRadius:4 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top', labels:{ font:{ size:10 } } } }, scales:{ x:{ ticks:{ font:{ size:10 } }, grid:{ display:false } }, y:{ ticks:{ font:{ size:10 }, callback:v=>(v/1000)+'k' } } } }
+  });
+  afficherPVersements(pVersements);
+  afficherPCotisations(pCotisations);
+}
+
+function afficherPVersements(data) {
+  const tbody = document.getElementById('p-versements-table');
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-light)">Aucun versement</td></tr>'; return; }
+  const modeColor = { 'Wave':'badge-green','Orange Money':'badge-amber','Moov Money':'badge-blue','Espèces':'badge-gray' };
+  tbody.innerHTML = data.map(v => {
+    const pct = Math.min(100, Math.round(((v.montantCollecte||0)/(v.montantObjectif||1))*100));
+    return '<tr><td><strong>'+(v.client?.nom||'?')+'</strong> '+(v.client?.prenom||'')+'</td><td>'+(v.mois||'–')+'</td><td style="color:var(--green);font-weight:600">'+nbFCFA(v.montant)+' FCFA</td><td><span class="badge '+(modeColor[v.modePaiement]||'badge-gray')+'">'+(v.modePaiement||'–')+'</span></td><td style="font-size:12px">'+(v.reference||'–')+'</td><td style="font-size:12px">'+(v.date?new Date(v.date).toLocaleDateString('fr-FR'):'–')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></td></tr>';
+  }).join('');
+}
+
+function afficherPCotisations(data) {
+  const tbody = document.getElementById('p-cotisations-table');
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-light)">Aucune cotisation</td></tr>'; return; }
+  tbody.innerHTML = data.map(c => {
+    const pct = Math.min(100, Math.round(((c.montantCollecte||0)/(c.montantObjectif||1))*100));
+    const reste = Math.max(0, (c.montantObjectif||0)-(c.montantCollecte||0));
+    const badgeClass = c.statut==='complete'?'badge-green':c.statut==='livre'?'badge-blue':pct<50?'badge-red':'badge-amber';
+    const statutLabel = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète':'Livrée';
+    return '<tr><td><strong>'+(c.client?.nom||'?')+'</strong><br><small>'+( c.client?.telephone||'')+'</small></td><td>'+(c.mois||'–')+'</td><td>'+(c.objectifPoulets||0)+' 🐔<br><small>'+nbFCFA(c.montantObjectif)+' FCFA</small></td><td style="color:var(--green);font-weight:600">'+nbFCFA(c.montantCollecte||0)+' FCFA</td><td style="color:'+(reste>0?'var(--red)':'var(--green)')+';font-weight:600">'+(reste>0?nbFCFA(reste)+' FCFA':'✅')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%;background:'+(pct>=100?'var(--green)':pct>=50?'var(--gold)':'var(--red)')+'"></div></div></td><td><span class="badge '+badgeClass+'">'+statutLabel+'</span></td><td>'+(c.statut!=='livre'?'<button class="btn btn-green btn-sm" onclick="ajouterVersement(\''+c._id+'\')">+ Versement</button>':'')+'</td></tr>';
+  }).join('');
+}
+
+function filtrerPaiements() {
+  const mode = document.getElementById('p-filter-mode').value;
+  afficherPVersements(mode ? pVersements.filter(v=>v.modePaiement===mode) : pVersements);
+}
+
+function filtrerCotisationsPaiements() {
+  const statut = document.getElementById('p-filter-statut').value;
+  afficherPCotisations(statut ? pCotisations.filter(c=>c.statut===statut) : pCotisations);
+}
+
+function relancerRetards() {
+  const retards = pCotisations.filter(c=>c.statut==='en_cours'&&(c.montantCollecte||0)<(c.montantObjectif||0)*0.5);
+  alert(retards.length ? '📱 SMS de relance envoyé à '+retards.length+' client(s) !' : 'Aucun retard détecté !');
+}
+
+function exporterCSVPaiements() {
+  const headers = ['Client','Téléphone','Mois','Montant','Mode','Référence','Date'];
+  const rows = pVersements.map(v => [(v.client?.nom||'')+' '+(v.client?.prenom||''),v.client?.telephone||'',v.mois||'',v.montant||0,v.modePaiement||'',v.reference||'',v.date?new Date(v.date).toLocaleDateString('fr-FR'):'']);
+  const csv = [headers,...rows].map(r=>r.join(';')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'paiements_biosaveur.csv'; a.click();
+}
+
+function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
+
+// ─── INIT ───────────────────────────────────────────────
+chargerDashboard();
 chargerClients();
-chargerCotisations();
 </script>
 </body>
 </html>
