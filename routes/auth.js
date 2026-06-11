@@ -15,7 +15,7 @@ router.post('/inscription', async (req, res) => {
     const hash = await bcrypt.hash(motDePasse, 10);
     const user = new User({ nom, prenom, telephone, email, motDePasse: hash });
     await user.save();
-    const qrData = JSON.stringify({ id: user._id, nom, prenom, telephone });
+    const qrData = `https://biosaveur-app-production.up.railway.app/qr.html?id=${user._id}`;
     const qrCode = await QRCode.toDataURL(qrData);
     user.qrCode = qrCode;
     await user.save();
@@ -76,6 +76,18 @@ router.get('/profil', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
+});// Connexion via QR code
+router.get('/qr/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-motDePasse');
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    if (user.role !== 'client') return res.status(403).json({ message: 'Accès refusé' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, user: { nom: user.nom, prenom: user.prenom, role: user.role, qrCode: user.qrCode } });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 });
  
 module.exports = router;
