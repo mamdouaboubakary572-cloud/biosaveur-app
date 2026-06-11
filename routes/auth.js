@@ -67,6 +67,15 @@ router.put('/jour-livraison', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
+});// Profil du client connecté
+router.get('/profil', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-motDePasse');
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
  
 module.exports = router;
