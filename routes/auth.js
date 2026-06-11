@@ -68,5 +68,5 @@ router.put('/jour-livraison', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
- Downloads/index (2).html
+ 
 module.exports = router;
