@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connecté'))
   .catch(err => console.log('Erreur MongoDB:', err));
 // SMS automatique hebdomadaire - rappel objectif cotisation
-const Cotisation = require('./modèles/Cotisation');
+const Cotisation = require('');./models/Cotisation
 const { envoyerSMS } = require('./services/sms');
 
 async function envoyerRappelsHebdomadaires() {
