@@ -887,7 +887,8 @@ function afficherCalendrier(cotisations) {
   for (let d=1;d<=dernier.getDate();d++) {
     const dateStr = new Date(an,mois,d).toDateString();
     const isToday = dateStr === todayStr;
-    const evts = cotisations.filter(c => c.jourLivraisonChoisi === d && (c.statut==='complete'||c.statut==='livre'));
+    const dateComplete = an + '-' + String(mois+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const evts = cotisations.filter(c => c.jourLivraisonChoisi === dateComplete && (c.statut==='complete'||c.statut==='livre'));
     grid.innerHTML += '<div class="cal-day' + (isToday?' today':'') + '" onclick="voirJour(' + d + ',' + JSON.stringify(evts).replace(/"/g,"'") + ')">' +
       '<div class="day-num">' + d + '</div>' + evts.map(()=>'<div class="event-dot"></div>').join('') + '</div>';
   }
