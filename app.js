@@ -14,6 +14,31 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
   .then(() => console.log('MongoDB connecté'))
   .catch(err => console.log('Erreur MongoDB:', err));
+// SMS automatique hebdomadaire - rappel objectif cotisation
+const Cotisation = require('./modèles/Cotisation');
+const { envoyerSMS } = require('./services/sms');
+
+async function envoyerRappelsHebdomadaires() {
+  try {
+    const cotisations = await Cotisation.find({ statut: 'en_cours' }).populate('client', 'nom prenom telephone');
+    for (const c of cotisations) {
+      if (!c.client || !c.client.telephone) continue;
+      const pct = Math.round((c.montantCollecte / c.montantObjectif) * 100);
+      const message = `Bonjour ${c.client.prenom}, rappel BIOSAVEUR: votre cotisation est a ${pct}% (${c.montantCollecte}/${c.montantObjectif} FCFA). Continuez vos versements pour atteindre votre objectif !`;
+      try {
+        await envoyerSMS(c.client.telephone, message);
+      } catch (smsErr) {
+        console.error('Erreur SMS rappel pour', c.client.telephone, smsErr);
+      }
+    }
+    console.log('Rappels SMS hebdomadaires envoyes:', cotisations.length);
+  } catch (err) {
+    console.error('Erreur envoi rappels SMS:', err);
+  }
+}
+
+const SEPT_JOURS = 7 * 24 * 60 * 60 * 1000;
+setInterval(envoyerRappelsHebdomadaires, SEPT_JOURS);
 
 app.use(cors());
 app.use(express.json());
