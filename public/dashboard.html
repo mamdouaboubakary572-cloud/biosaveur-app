@@ -188,6 +188,7 @@ tr:last-child td{border-bottom:none;}
       <div class="nav-label">Communication</div>
       <button class="nav-btn" onclick="afficherTab('messages')"><span class="icon">💬</span> Messages <span class="notif" id="notif-messages" style="display:none">0</span></button>
       <button class="nav-btn" onclick="afficherTab('sms')"><span class="icon">📱</span> SMS</button>
+      
     </div>
     <div class="nav-section">
       <div class="nav-label">Organisation</div>
@@ -333,7 +334,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div class="form-row">
           <input type="text" id="cot-mois" placeholder="Mois (ex: Juin 2025) *">
-          <input type="number" id="cot-jour" placeholder="Jour de livraison souhaité (1-31)">
+          <input type="date" id="cot-jour" placeholder="Date de livraison souhaitée">
         </div>
         <div class="form-actions">
           <button class="btn btn-green" onclick="creerCotisation()">✓ Créer</button>
@@ -726,7 +727,7 @@ async function chargerCotisations() {
       '<td>' + c.objectifPoulets + ' 🐔<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
       '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
       '<td style="min-width:100px"><small>' + pct + '%</small><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + couleur(c) + '"></div></div></td>' +
-      '<td>' + (c.jourLivraisonChoisi ? 'Le ' + c.jourLivraisonChoisi : '–') + '</td>' +
+      '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : '–') + '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + c.statut.replace('_',' ') + '</span></td>' +
       '<td style="white-space:nowrap">' +
       (c.statut !== 'livre' ? '<button class="btn btn-green btn-sm" onclick="ajouterVersement(\'' + c._id + '\')">+ Versement</button> ' : '') +
@@ -738,7 +739,7 @@ async function creerCotisation() {
   const clientId = document.getElementById('cot-client').value;
   const objectifPoulets = parseInt(document.getElementById('cot-poulets').value);
   const prixUnitaire = parseInt(document.getElementById('cot-prix').value) || 2800;
-  const mois = document.getElementById('cot-mois').value;
+  const jourLivraisonChoisi = document.getElementById('cot-jour').value || undefined;
   const jourLivraisonChoisi = parseInt(document.getElementById('cot-jour').value) || undefined;
   if (!clientId||!objectifPoulets||!mois) { alert('Remplissez tous les champs obligatoires'); return; }
   const res = await fetch('/api/cotisations', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({clientId,objectifPoulets,prixUnitaire,mois,jourLivraisonChoisi}) });
@@ -778,7 +779,7 @@ async function chargerLivraisons() {
   tbody.innerHTML = livraisons.length ? livraisons.map(c =>
     '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small>' + (c.client?.telephone||'') + '</small></td>' +
     '<td>' + c.mois + '</td><td>' + c.objectifPoulets + ' 🐔</td>' +
-    '<td>' + (c.jourLivraisonChoisi ? 'Le ' + c.jourLivraisonChoisi : 'Non défini') + '</td>' +
+    '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : 'Non défini') + '</td>' +
     '<td>' + (c.dateLivraisonEffective ? formatDate(c.dateLivraisonEffective) : '–') + '</td>' +
     '<td><span class="badge" style="background:' + (c.statut==='livre'?'var(--blue-light)':'var(--green-light)') + ';color:' + couleur(c) + '">' + c.statut.replace('_',' ') + '</span></td>' +
     '<td>' + (c.statut === 'complete' ? '<button class="btn btn-green btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Confirmer</button>' : '<span style="color:var(--text-light)">✅ Livrée</span>') + '</td></tr>'
