@@ -68,15 +68,45 @@ router.post('/:id/versement', auth, async (req, res) => {
   }
 });
  
-// Confirmer livraison
+// Confirmer livraison + archivage automatique + nouvelle cotisation
 router.put('/:id/livrer', auth, async (req, res) => {
   try {
-    const cotisation = await Cotisation.findByIdAndUpdate(
-      req.params.id,
-      { statut: 'livre', dateLivraisonEffective: new Date() },
-      { new: true }
-    );
-    res.json({ message: 'Livraison confirmée', cotisation });
+    const cotisationActuelle = await Cotisation.findById(req.params.id);
+    if (!cotisationActuelle) {
+      return res.status(404).json({ message: 'Cotisation non trouvée' });
+    }
+    if (cotisationActuelle.statut === 'livre') {
+      return res.status(400).json({ message: 'Cette cotisation est déjà livrée' });
+    }
+
+    cotisationActuelle.statut = 'livre';
+    cotisationActuelle.dateLivraisonEffective = new Date();
+    await cotisationActuelle.save();
+
+    const moisActuel = new Date(cotisationActuelle.mois || Date.now());
+    const moisSuivant = new Date(moisActuel);
+    moisSuivant.setMonth(moisSuivant.getMonth() + 1);
+
+    const nouvelleCotisation = new Cotisation({
+      client: cotisationActuelle.client,
+      mois: moisSuivant,
+      objectifPoulets: cotisationActuelle.objectifPoulets,
+      prixUnitaire: cotisationActuelle.prixUnitaire,
+      montantObjectif: cotisationActuelle.montantObjectif,
+      montantCollecte: 0,
+      versements: [],
+      statut: 'en_cours',
+      jourLivraisonChoisi: cotisationActuelle.jourLivraisonChoisi,
+      encaisse: false,
+      cotisationPrecedenteId: cotisationActuelle._id
+    });
+    await nouvelleCotisation.save();
+
+    res.json({
+      message: 'Livraison confirmée, nouvelle cotisation créée',
+      cotisationLivree: cotisationActuelle,
+      nouvelleCotisation
+    });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
@@ -116,5 +146,18 @@ router.get('/mes-cotisations', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
- 
+ // Basculer le statut encaissé
+router.patch('/:id/encaisse', auth, async (req, res) => {
+  try {
+    const cotisation = await Cotisation.findById(req.params.id);
+    if (!cotisation) {
+      return res.status(404).json({ message: 'Cotisation non trouvée' });
+    }
+    cotisation.encaisse = !cotisation.encaisse;
+    await cotisation.save();
+    res.json({ message: 'Statut encaissé mis à jour', encaisse: cotisation.encaisse, cotisation });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 module.exports = router;
