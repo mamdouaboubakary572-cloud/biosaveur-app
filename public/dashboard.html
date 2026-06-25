@@ -740,8 +740,8 @@ async function creerCotisation() {
   const clientId = document.getElementById('cot-client').value;
   const objectifPoulets = parseInt(document.getElementById('cot-poulets').value);
   const prixUnitaire = parseInt(document.getElementById('cot-prix').value) || 2800;
+  const mois = document.getElementById('cot-mois').value;
   const jourLivraisonChoisi = document.getElementById('cot-jour').value || undefined;
-  const jourLivraisonChoisi = parseInt(document.getElementById('cot-jour').value) || undefined;
   if (!clientId||!objectifPoulets||!mois) { alert('Remplissez tous les champs obligatoires'); return; }
   const res = await fetch('/api/cotisations', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({clientId,objectifPoulets,prixUnitaire,mois,jourLivraisonChoisi}) });
   const data = await res.json();
