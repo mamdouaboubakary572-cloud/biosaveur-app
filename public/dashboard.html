@@ -729,11 +729,12 @@ async function chargerCotisations() {
       '<td style="min-width:100px"><small>' + pct + '%</small><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + couleur(c) + '"></div></div></td>' +
       '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : '–') + '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + c.statut.replace('_',' ') + '</span></td>' +
+      '<td><span class="badge ' + (c.encaisse ? 'badge-green' : 'badge-red') + '" style="cursor:pointer" onclick="toggleEncaisse(\'' + c._id + '\')">' + (c.encaisse ? '✅ Encaissé' : '❌ Non encaissé') + '</span></td>' +
       '<td style="white-space:nowrap">' +
       (c.statut !== 'livre' ? '<button class="btn btn-green btn-sm" onclick="ajouterVersement(\'' + c._id + '\')">+ Versement</button> ' : '') +
       (c.statut === 'complete' ? '<button class="btn btn-blue btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Livrer</button> ' : '') +
       '<button class="btn btn-red btn-sm" onclick="supprimerCotisation(\'' + c._id + '\')">🗑</button></td></tr>';
-  }).join('') || '<tr><td colspan="8" class="empty">Aucune cotisation</td></tr>';
+  }).join('') || '<tr><td colspan="9" class="empty">Aucune cotisation</td></tr>';
 }
 async function creerCotisation() {
   const clientId = document.getElementById('cot-client').value;
@@ -762,7 +763,12 @@ async function confirmerLivraison(cotisationId) {
   const res = await fetch('/api/cotisations/' + cotisationId + '/livrer', { method:'PUT', headers:{'Authorization':'Bearer '+token} });
   if (res.ok) { alert('✅ Livraison confirmée !'); chargerCotisations(); chargerLivraisons(); }
 }
-async function supprimerCotisation(id) {
+async function toggleEncaisse(id) {
+  const res = await fetch('/api/cotisations/' + id + '/encaisse', { method:'PATCH', headers:{'Authorization':'Bearer '+token} });
+  if (res.ok) { chargerCotisations(); }
+  else alert('Erreur lors de la mise à jour du statut encaissé');
+}
+  async function supprimerCotisation(id) {
   if (!confirm('Supprimer cette cotisation ?')) return;
   const res = await fetch('/api/cotisations/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
   if (res.ok) { alert('✅ Cotisation supprimée'); chargerCotisations(); }
