@@ -183,6 +183,7 @@ tr:last-child td{border-bottom:none;}
       <button class="nav-btn" onclick="afficherTab('cotisations')"><span class="icon">🐔</span> Cotisations</button>
       <button class="nav-btn" onclick="afficherTab('livraisons')"><span class="icon">🚚</span> Livraisons</button>
       <button class="nav-btn" onclick="afficherTab('paiements')"><span class="icon">💰</span> Paiements</button>
+      <button class="nav-btn" onclick="afficherTab('historique')"><span class="icon">📦</span> Historique</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Communication</div>
@@ -428,6 +429,37 @@ tr:last-child td{border-bottom:none;}
         </table>
       </div>
     </div>
+    <!-- ===== HISTORIQUE ===== -->
+<div class="section" id="section-historique">
+  <div class="stats-grid">
+    <div class="stat-card gold"><div class="s-label">💰 Total livré (tous clients)</div><div class="s-value" id="h-total-livre">0</div><div class="s-sub">FCFA</div></div>
+    <div class="stat-card blue"><div class="s-label">📦 Livraisons effectuées</div><div class="s-value" id="h-nb-livraisons">0</div><div class="s-sub">au total</div></div>
+    <div class="stat-card green"><div class="s-label">👥 Clients fidèles</div><div class="s-value" id="h-nb-clients">0</div><div class="s-sub">avec historique</div></div>
+  </div>
+
+  <div class="section-header" style="margin-top:16px;">
+    <div class="section-title">👤 Stats par client</div>
+    <select id="h-filter-client" onchange="filtrerHistoriqueParClient()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+      <option value="">Tous les clients</option>
+    </select>
+  </div>
+  <div class="table-wrap" style="margin-bottom:16px;">
+    <table>
+      <thead><tr><th>Client</th><th>Téléphone</th><th>Total livré</th><th>Nb livraisons</th><th>Fréquence moy.</th></tr></thead>
+      <tbody id="h-stats-table"></tbody>
+    </table>
+  </div>
+
+  <div class="section-header" style="margin-top:16px;">
+    <div class="section-title">📜 Historique détaillé des livraisons</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Mois</th><th>Poulets</th><th>Montant livré</th><th>Date livraison</th></tr></thead>
+      <tbody id="h-historique-table"></tbody>
+    </table>
+  </div>
+</div>
 
     <!-- ===== MESSAGES ===== -->
     <div class="section" id="section-messages">
@@ -585,6 +617,7 @@ function afficherTab(tab) {
   if (tab === 'dashboard') chargerDashboard();
   if (tab === 'admins') chargerAdmins();
   if (tab === 'paiements') chargerPaiements();
+  if (tab === 'historique') chargerHistorique();
 }
 
 // ─── DASHBOARD ─────────────────────────────────────────
@@ -983,6 +1016,62 @@ function afficherPCotisations(data) {
     const statutLabel = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète':'Livrée';
     return '<tr><td><strong>'+(c.client?.nom||'?')+'</strong><br><small>'+( c.client?.telephone||'')+'</small></td><td>'+(c.mois||'–')+'</td><td>'+(c.objectifPoulets||0)+' 🐔<br><small>'+nbFCFA(c.montantObjectif)+' FCFA</small></td><td style="color:var(--green);font-weight:600">'+nbFCFA(c.montantCollecte||0)+' FCFA</td><td style="color:'+(reste>0?'var(--red)':'var(--green)')+';font-weight:600">'+(reste>0?nbFCFA(reste)+' FCFA':'✅')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%;background:'+(pct>=100?'var(--green)':pct>=50?'var(--gold)':'var(--red)')+'"></div></div></td><td><span class="badge '+badgeClass+'">'+statutLabel+'</span></td><td>'+(c.statut!=='livre'?'<button class="btn btn-green btn-sm" onclick="ajouterVersement(\''+c._id+'\')">+ Versement</button>':'')+'</td></tr>';
   }).join('');
+}
+
+  // ─── HISTORIQUE ────────────────────────────────────────
+let dataHistorique = null;
+
+async function chargerHistorique() {
+  const res = await fetch('/api/cotisations/historique', { headers: { 'Authorization': 'Bearer ' + token } });
+  const data = await res.json();
+  if (!res.ok) { alert('Erreur chargement historique'); return; }
+  dataHistorique = data;
+  afficherStatsGlobalesHistorique(data);
+  remplirFiltreClientHistorique(data.statsParClient);
+  afficherStatsParClient(data.statsParClient);
+  afficherHistoriqueDetaille(data.cotisationsLivrees);
+}
+
+function afficherStatsGlobalesHistorique(data) {
+  const totalLivre = data.statsParClient.reduce((sum, s) => sum + s.totalLivre, 0);
+  document.getElementById('h-total-livre').textContent = nbFCFA(totalLivre);
+  document.getElementById('h-nb-livraisons').textContent = data.cotisationsLivrees.length;
+  document.getElementById('h-nb-clients').textContent = data.statsParClient.length;
+}
+
+function remplirFiltreClientHistorique(stats) {
+  const select = document.getElementById('h-filter-client');
+  select.innerHTML = '<option value="">Tous les clients</option>' +
+    stats.map(s => '<option value="' + s.client?._id + '">' + (s.client?.nom || '?') + ' ' + (s.client?.prenom || '') + '</option>').join('');
+}
+
+function afficherStatsParClient(stats) {
+  document.getElementById('h-stats-table').innerHTML = stats.map(s =>
+    '<tr><td><strong>' + (s.client?.nom || '?') + ' ' + (s.client?.prenom || '') + '</strong></td>' +
+    '<td>' + (s.client?.telephone || '–') + '</td>' +
+    '<td>' + nbFCFA(s.totalLivre) + ' FCFA</td>' +
+    '<td>' + s.nombreLivraisons + '</td>' +
+    '<td>' + (s.frequenceMoyenneJours ? s.frequenceMoyenneJours + ' jours' : '–') + '</td></tr>'
+  ).join('') || '<tr><td colspan="5" class="empty">Aucune livraison enregistrée</td></tr>';
+}
+
+function afficherHistoriqueDetaille(cotisations) {
+  document.getElementById('h-historique-table').innerHTML = cotisations.map(c =>
+    '<tr><td><strong>' + (c.client?.nom || '?') + ' ' + (c.client?.prenom || '') + '</strong></td>' +
+    '<td>' + c.mois + '</td>' +
+    '<td>' + c.objectifPoulets + ' 🐔</td>' +
+    '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
+    '<td>' + (c.dateLivraisonEffective ? new Date(c.dateLivraisonEffective).toLocaleDateString('fr-FR') : '–') + '</td></tr>'
+  ).join('') || '<tr><td colspan="5" class="empty">Aucune livraison enregistrée</td></tr>';
+}
+
+function filtrerHistoriqueParClient() {
+  const clientId = document.getElementById('h-filter-client').value;
+  if (!dataHistorique) return;
+  const statsFiltered = clientId ? dataHistorique.statsParClient.filter(s => s.client?._id === clientId) : dataHistorique.statsParClient;
+  const cotisFiltered = clientId ? dataHistorique.cotisationsLivrees.filter(c => c.client?._id === clientId) : dataHistorique.cotisationsLivrees;
+  afficherStatsParClient(statsFiltered);
+  afficherHistoriqueDetaille(cotisFiltered);
 }
 
 function filtrerPaiements() {
