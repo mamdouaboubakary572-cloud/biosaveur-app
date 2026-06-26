@@ -624,10 +624,11 @@ function afficherTab(tab) {
 let chartCollecte, chartStatut, chartEvol;
 async function chargerDashboard() {
   const h = { headers: { 'Authorization': 'Bearer ' + token } };
-  const [clients, cotisations, messages] = await Promise.all([
+  const [clients, cotisations, messages, statsMensuelles] = await Promise.all([
     fetch('/api/admin/clients', h).then(r => r.json()),
     fetch('/api/cotisations', h).then(r => r.json()),
-    fetch('/api/messages', h).then(r => r.json())
+    fetch('/api/messages', h).then(r => r.json()),
+    fetch('/api/cotisations/stats-mensuelles', h).then(r => r.json())
   ]);
   const actives = cotisations.filter(c => c.statut === 'en_cours');
   const completes = cotisations.filter(c => c.statut === 'complete');
@@ -663,10 +664,11 @@ async function chargerDashboard() {
     '<div style="padding:8px 0;font-size:13px;">👥 <strong>' + clients.length + ' client(s)</strong> inscrits au total</div>';
 
   // Charts
-  const mois = ['Jan','Fév','Mar','Avr','Mai','Juin'];
-  const collectes = [950000,1200000,1450000,1750000,2050000,collecte];
-  const objectifs = [1200000,1200000,1500000,1800000,2200000,cotisations.reduce((s,c)=>s+c.montantObjectif,0)];
-
+  const mois = statsMensuelles.map(s => s.label);
+  const collectes = statsMensuelles.map(s => s.collecte);
+  const objectifs = statsMensuelles.map(s => s.objectif);
+  const nouveauxClientsParMois = statsMensuelles.map(s => s.nbNouveauxClients);
+  const livraisonsParMois = statsMensuelles.map(s => s.nbLivraisons);
   if (chartCollecte) chartCollecte.destroy();
   chartCollecte = new Chart(document.getElementById('chartCollecte'), {
     type: 'bar',
@@ -692,8 +694,8 @@ async function chargerDashboard() {
   chartEvol = new Chart(document.getElementById('chartEvol'), {
     type: 'line',
     data: { labels: mois, datasets: [
-      { label:'Nouveaux clients', data:[3,5,7,8,6,clients.length], borderColor:'#1565c0', backgroundColor:'rgba(21,101,192,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1565c0', borderWidth:2 },
-      { label:'Livraisons', data:[8,14,20,25,28,livrees.length+actives.length], borderColor:'#1a6b3c', backgroundColor:'rgba(26,107,60,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1a6b3c', borderWidth:2 }
+     { label:'Nouveaux clients', data: nouveauxClientsParMois, borderColor:'#1565c0', backgroundColor:'rgba(21,101,192,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1565c0', borderWidth:2 },
+      { label:'Livraisons', data: livraisonsParMois, borderColor:'#1a6b3c', backgroundColor:'rgba(26,107,60,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1a6b3c', borderWidth:2 }
     ]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{ x:{ticks:{font:{size:10}},grid:{display:false}}, y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}} } }
