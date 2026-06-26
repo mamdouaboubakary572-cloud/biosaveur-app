@@ -206,4 +206,56 @@ router.get('/historique', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
+// Statistiques mensuelles réelles (6 derniers mois)
+router.get('/stats-mensuelles', auth, async (req, res) => {
+  try {
+    const cotisations = await Cotisation.find();
+    const clients = await User.find();
+
+    const moisNoms = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+    const maintenant = new Date();
+    const mois6 = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
+      mois6.push({ annee: d.getFullYear(), moisIndex: d.getMonth(), label: moisNoms[d.getMonth()] });
+    }
+
+    const stats = mois6.map(m => {
+      const debutMois = new Date(m.annee, m.moisIndex, 1);
+      const finMois = new Date(m.annee, m.moisIndex + 1, 0, 23, 59, 59);
+
+      const cotisationsDuMois = cotisations.filter(c => {
+        const d = new Date(c.createdAt);
+        return d >= debutMois && d <= finMois;
+      });
+
+      const collecte = cotisationsDuMois.reduce((s, c) => s + (c.montantCollecte || 0), 0);
+      const objectif = cotisationsDuMois.reduce((s, c) => s + (c.montantObjectif || 0), 0);
+
+      const livraisonsDuMois = cotisations.filter(c => {
+        if (!c.dateLivraisonEffective) return false;
+        const d = new Date(c.dateLivraisonEffective);
+        return d >= debutMois && d <= finMois;
+      });
+
+      const nouveauxClientsDuMois = clients.filter(cl => {
+        const d = new Date(cl.dateCreation);
+        return d >= debutMois && d <= finMois;
+      });
+
+      return {
+        label: m.label,
+        collecte,
+        objectif,
+        nbLivraisons: livraisonsDuMois.length,
+        nbNouveauxClients: nouveauxClientsDuMois.length
+      };
+    });
+
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 module.exports = router;
