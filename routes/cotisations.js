@@ -160,4 +160,50 @@ router.patch('/:id/encaisse', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
+// Historique des livraisons avec stats par client
+router.get('/historique', auth, async (req, res) => {
+  try {
+    const cotisationsLivrees = await Cotisation.find({ statut: 'livre' })
+      .populate('client', 'nom prenom telephone')
+      .sort({ dateLivraisonEffective: -1 });
+
+    const statsParClient = {};
+    cotisationsLivrees.forEach(c => {
+      const clientId = c.client?._id?.toString();
+      if (!clientId) return;
+      if (!statsParClient[clientId]) {
+        statsParClient[clientId] = {
+          client: c.client,
+          totalLivre: 0,
+          nombreLivraisons: 0,
+          dates: []
+        };
+      }
+      statsParClient[clientId].totalLivre += c.montantCollecte || 0;
+      statsParClient[clientId].nombreLivraisons += 1;
+      statsParClient[clientId].dates.push(c.dateLivraisonEffective);
+    });
+
+    Object.values(statsParClient).forEach(stat => {
+      if (stat.dates.length > 1) {
+        const datesTriees = stat.dates.filter(d => d).sort((a, b) => new Date(a) - new Date(b));
+        let totalEcarts = 0;
+        for (let i = 1; i < datesTriees.length; i++) {
+          totalEcarts += (new Date(datesTriees[i]) - new Date(datesTriees[i - 1])) / (1000 * 60 * 60 * 24);
+        }
+        stat.frequenceMoyenneJours = Math.round(totalEcarts / (datesTriees.length - 1));
+      } else {
+        stat.frequenceMoyenneJours = null;
+      }
+      delete stat.dates;
+    });
+
+    res.json({
+      cotisationsLivrees,
+      statsParClient: Object.values(statsParClient)
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 module.exports = router;
