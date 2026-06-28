@@ -202,7 +202,7 @@ if (role && role !== 'client') window.location.href = '/dashboard.html';
 
 function deconnexion() { localStorage.clear(); window.location.href = '/'; }
 function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
-function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); }
+function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); } function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
 
 let monQRCode = '';
 let mesCotisations = [];
@@ -285,7 +285,7 @@ async function chargerCotisations() {
     const vDiv = document.getElementById('versements-list');
     if (!versements.length) vDiv.innerHTML = '<div class="empty">Aucun versement enregistré</div>';
     else vDiv.innerHTML = versements.map(v =>
-      `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div><div class="v-date">${v.date?formatDate(v.date):'–'}</div></div>`
+      `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div><div class="v-date">${v.date?formatDateHeure(v.date):'–'}</div></div>`
     ).join('');
 
     // Remplir selects
