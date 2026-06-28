@@ -241,15 +241,39 @@ async function chargerCotisations() {
     const div = document.getElementById('cotisations-list');
     if (!mesCotisations.length) { div.innerHTML = '<div class="empty">Aucune cotisation en cours</div>'; }
     else {
-      div.innerHTML = mesCotisations.map(c => {
+     div.innerHTML = mesCotisations.map(c => {
         const p = Math.min(100, Math.round((c.montantCollecte||0)/(c.montantObjectif||1)*100));
         const bc = c.statut==='complete'?'badge-green':c.statut==='livre'?'badge-blue':'badge-amber';
         const sl = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète ✅':'Livrée 🚚';
+        const reste = Math.max(0, (c.montantObjectif||0) - (c.montantCollecte||0));
+        const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
         return `<div class="cotisation-item">
-          <div class="cot-header"><div class="cot-title">${c.mois}${c.articles && c.articles.length ? '<br><small style="font-weight:400;color:var(--text-muted)">' + c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') + '</small>' : ' — ' + (c.objectifPoulets||0) + ' 🐔'}</div><span class="badge ${bc}">${sl}</span></div>
+          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small></div><span class="badge ${bc}">${sl}</span></div>
           <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
           <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
           ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
+          ${c.statut!=='livre'?`
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+            <button class="btn-green" style="padding:9px;font-size:12px;" onclick="toggleCarte('${c._id}','verser')">💰 Verser</button>
+            <button class="btn-green" style="padding:9px;font-size:12px;background:var(--blue);" onclick="toggleCarte('${c._id}','livraison')">🚚 Livraison</button>
+          </div>
+          <div id="panel-verser-${c._id}" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+            <input type="number" id="vmontant-${c._id}" class="form-input" placeholder="Montant (FCFA)" value="${reste>0?reste:''}">
+            <select id="vmode-${c._id}" class="form-input">
+              <option value="">-- Mode de paiement --</option>
+              <option value="Wave">Wave</option>
+              <option value="Orange Money">Orange Money</option>
+              <option value="Espèces">Espèces</option>
+            </select>
+            <input type="text" id="vref-${c._id}" class="form-input" placeholder="Référence (optionnel)">
+            <button class="btn-green" onclick="confirmerVersementCarte('${c._id}')">✅ Confirmer le versement</button>
+          </div>
+          <div id="panel-livraison-${c._id}" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+            <input type="date" id="ldate-${c._id}" class="form-input">
+            <input type="time" id="lheure-${c._id}" class="form-input">
+            <button class="btn-green" onclick="confirmerLivraisonCarte('${c._id}')">📅 Confirmer la livraison</button>
+          </div>
+          `:''}
         </div>`;
       }).join('');
     }
@@ -277,7 +301,58 @@ async function chargerCotisations() {
     document.getElementById('cotisations-list').innerHTML = '<div class="empty">Erreur de chargement</div>';
   }
 }
+function toggleCarte(id, type) {
+  const panelVerser = document.getElementById('panel-verser-' + id);
+  const panelLivraison = document.getElementById('panel-livraison-' + id);
+  if (type === 'verser') {
+    panelLivraison.style.display = 'none';
+    panelVerser.style.display = panelVerser.style.display === 'none' ? 'block' : 'none';
+  } else {
+    panelVerser.style.display = 'none';
+    panelLivraison.style.display = panelLivraison.style.display === 'none' ? 'block' : 'none';
+  }
+}
 
+async function confirmerVersementCarte(cotisationId) {
+  const montant = parseInt(document.getElementById('vmontant-' + cotisationId).value);
+  const modePaiement = document.getElementById('vmode-' + cotisationId).value;
+  const reference = document.getElementById('vref-' + cotisationId).value;
+  if (!montant || montant <= 0) { alert('Entrez un montant valide'); return; }
+  if (!modePaiement) { alert('Choisissez un mode de paiement'); return; }
+  if (!confirm('Confirmer un versement de ' + nbFCFA(montant) + ' FCFA ?')) return;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/versement', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ montant, modePaiement, reference })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Versement enregistré ! Merci.');
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+
+async function confirmerLivraisonCarte(cotisationId) {
+  const date = document.getElementById('ldate-' + cotisationId).value;
+  const heure = document.getElementById('lheure-' + cotisationId).value;
+  if (!date) { alert('Choisissez une date'); return; }
+  const dateObj = new Date(date);
+  const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
+  const res = await fetch('/api/cotisations/' + cotisationId + '/jour-livraison', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ jourLivraisonChoisi })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Date de livraison enregistrée : ' + jourLivraisonChoisi);
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
 async function envoyerVersement() {
   const cotisationId = document.getElementById('pay-cotisation').value;
   const montant = parseInt(document.getElementById('pay-montant').value);
