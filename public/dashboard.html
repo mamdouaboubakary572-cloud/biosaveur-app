@@ -330,21 +330,29 @@ tr:last-child td{border-bottom:none;}
       </div>
 
       <div class="form-box" id="form-cotisation">
-        <h4>Créer une cotisation</h4>
-        <div class="form-row triple">
-          <select id="cot-client"><option value="">-- Choisir un client --</option></select>
-          <input type="number" id="cot-poulets" placeholder="Nombre de poulets *">
-          <input type="number" id="cot-prix" placeholder="Prix unitaire (défaut: 2800 FCFA)">
-        </div>
-        <div class="form-row">
-          <input type="text" id="cot-mois" placeholder="Mois (ex: Juin 2025) *">
-          <input type="date" id="cot-jour" placeholder="Date de livraison souhaitée">
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-green" onclick="creerCotisation()">✓ Créer</button>
-          <button class="btn btn-ghost" onclick="toggleForm('form-cotisation')">Annuler</button>
-        </div>
-      </div>
+  <h4>Créer une cotisation</h4>
+  <div class="form-row">
+    <select id="cot-client"><option value="">-- Choisir un client --</option></select>
+    <select id="cot-mois">
+      <option value="">-- Choisir le mois --</option>
+    </select>
+  </div>
+
+  <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🛒 Articles du panier</div>
+    <div id="panier-lignes"></div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="ajouterLignePanier()" style="margin-top:6px;">+ Ajouter un article</button>
+    <div style="margin-top:10px;font-weight:600;font-size:14px;color:var(--green);">Total : <span id="panier-total">0</span> FCFA</div>
+  </div>
+
+  <div class="form-row">
+    <input type="date" id="cot-jour" placeholder="Date de livraison souhaitée">
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-green" onclick="creerCotisation()">✓ Créer</button>
+    <button class="btn btn-ghost" onclick="toggleForm('form-cotisation')">Annuler</button>
+  </div>
+</div>
 
       <div class="table-wrap">
         <table>
