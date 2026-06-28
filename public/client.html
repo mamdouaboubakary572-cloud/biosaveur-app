@@ -231,7 +231,7 @@ async function chargerCotisations() {
         const bc = c.statut==='complete'?'badge-green':c.statut==='livre'?'badge-blue':'badge-amber';
         const sl = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète ✅':'Livrée 🚚';
         return `<div class="cotisation-item">
-          <div class="cot-header"><div class="cot-title">${c.mois} — ${c.objectifPoulets} 🐔</div><span class="badge ${bc}">${sl}</span></div>
+          <div class="cot-header"><div class="cot-title">${c.mois}${c.articles && c.articles.length ? '<br><small style="font-weight:400;color:var(--text-muted)">' + c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') + '</small>' : ' — ' + (c.objectifPoulets||0) + ' 🐔'}</div><span class="badge ${bc}">${sl}</span></div>
           <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
           <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
           ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
