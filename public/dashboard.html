@@ -784,11 +784,10 @@ const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','A
 
 function remplirMoisDisponibles() {
   const select = document.getElementById('cot-mois');
-  const maintenant = new Date();
+  const annee = new Date().getFullYear();
   let options = '<option value="">-- Choisir le mois --</option>';
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() + i, 1);
-    const label = MOIS_NOMS[d.getMonth()] + ' ' + d.getFullYear();
+  for (let i = 0; i < 12; i++) {
+    const label = MOIS_NOMS[i] + ' ' + annee;
     options += '<option value="' + label + '">' + label + '</option>';
   }
   select.innerHTML = options;
