@@ -773,7 +773,7 @@ async function chargerCotisations() {
     const badgeClass = c.statut === 'complete' ? 'badge-green' : c.statut === 'livre' ? 'badge-blue' : 'badge-amber';
     return '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small style="color:var(--text-muted)">' + (c.client?.telephone||'') + '</small></td>' +
       '<td>' + c.mois + '</td>' +
-      '<td>' + c.objectifPoulets + ' 🐔<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
+      '<td>' + (c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join('<br>') : (c.objectifPoulets||0) + ' 🐔') + '<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
       '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
       '<td style="min-width:100px"><small>' + pct + '%</small><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + couleur(c) + '"></div></div></td>' +
       '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : '–') + '</td>' +
