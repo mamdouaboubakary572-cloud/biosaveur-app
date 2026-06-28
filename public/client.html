@@ -137,23 +137,9 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     <select id="liv-cotisation" class="form-input">
       <option value="">-- Choisir ma cotisation --</option>
     </select>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Jour</label>
-        <input type="number" id="liv-jour" placeholder="Ex: 15" min="1" max="31" class="form-input" style="margin-bottom:0;">
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Mois</label>
-        <select id="liv-mois" class="form-input" style="margin-bottom:0;">
-          <option value="">-- Mois --</option>
-          <option value="1">Janvier</option><option value="2">Février</option>
-          <option value="3">Mars</option><option value="4">Avril</option>
-          <option value="5">Mai</option><option value="6">Juin</option>
-          <option value="7">Juillet</option><option value="8">Août</option>
-          <option value="9">Septembre</option><option value="10">Octobre</option>
-          <option value="11">Novembre</option><option value="12">Décembre</option>
-        </select>
-      </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Date souhaitée</label>
+      <input type="date" id="liv-date" class="form-input" style="margin-bottom:0;">
     </div>
     <div style="margin-bottom:10px;">
       <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Heure souhaitée</label>
@@ -304,12 +290,12 @@ async function envoyerVersement() {
 
 async function enregistrerLivraison() {
   const cotisationId = document.getElementById('liv-cotisation').value;
-  const jour = document.getElementById('liv-jour').value;
-  const mois = document.getElementById('liv-mois').value;
+  const date = document.getElementById('liv-date').value;
   const heure = document.getElementById('liv-heure').value;
   if (!cotisationId) { alert('Choisissez une cotisation'); return; }
-  if (!jour || !mois) { alert('Choisissez un jour et un mois'); return; }
-  const jourLivraisonChoisi = `${jour}/${mois}${heure ? ' à ' + heure : ''}`;
+  if (!date) { alert('Choisissez une date'); return; }
+  const dateObj = new Date(date);
+  const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
   const res = await fetch('/api/cotisations/' + cotisationId + '/jour-livraison', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
