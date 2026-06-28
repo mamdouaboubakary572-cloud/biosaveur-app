@@ -83,10 +83,11 @@ router.put('/:id/livrer', auth, async (req, res) => {
     cotisationActuelle.dateLivraisonEffective = new Date();
     await cotisationActuelle.save();
 
+    const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
     const moisActuel = new Date(cotisationActuelle.mois || Date.now());
-    const moisSuivant = new Date(moisActuel);
-    moisSuivant.setMonth(moisSuivant.getMonth() + 1);
-
+    const moisSuivantDate = new Date(moisActuel);
+    moisSuivantDate.setMonth(moisSuivantDate.getMonth() + 1);
+    const moisSuivant = moisNoms[moisSuivantDate.getMonth()] + ' ' + moisSuivantDate.getFullYear();
     const nouvelleCotisation = new Cotisation({
       client: cotisationActuelle.client,
       mois: moisSuivant,
