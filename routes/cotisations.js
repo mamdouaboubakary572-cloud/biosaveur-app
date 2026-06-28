@@ -8,12 +8,20 @@ const { envoyerSMS } = require('../services/sms');
 // Créer une cotisation
 router.post('/', auth, async (req, res) => {
   try {
-    const { clientId, objectifPoulets, prixUnitaire, mois, jourLivraisonChoisi } = req.body;
-    const montantObjectif = objectifPoulets * (prixUnitaire || 2800);
+    const { clientId, articles, mois, jourLivraisonChoisi } = req.body;
+    if (!articles || !articles.length) {
+      return res.status(400).json({ message: 'Au moins un article est requis' });
+    }
+    const articlesCalcules = articles.map(a => ({
+      produit: a.produit,
+      quantite: a.quantite,
+      prixUnitaire: a.prixUnitaire,
+      sousTotal: a.quantite * a.prixUnitaire
+    }));
+    const montantObjectif = articlesCalcules.reduce((s, a) => s + a.sousTotal, 0);
     const cotisation = new Cotisation({
       client: clientId,
-      objectifPoulets,
-      prixUnitaire: prixUnitaire || 2800,
+      articles: articlesCalcules,
       montantObjectif,
       mois,
       jourLivraisonChoisi
@@ -22,8 +30,9 @@ router.post('/', auth, async (req, res) => {
     try {
       const client = await User.findById(clientId);
       if (client && client.telephone) {
+        const resume = articlesCalcules.map(a => `${a.quantite}x ${a.produit}`).join(', ');
         await envoyerSMS('+225' + client.telephone,
-          `Bonjour ${client.prenom}, votre cotisation BIOSAVEUR de ${objectifPoulets} poulets a été créée. Montant: ${montantObjectif} FCFA.`);
+          `Bonjour ${client.prenom}, votre cotisation BIOSAVEUR (${resume}) a été créée. Montant: ${montantObjectif} FCFA.`);
       }
     } catch (smsErr) { console.error('SMS err:', smsErr.message); }
     res.status(201).json({ message: 'Cotisation créée', cotisation });
