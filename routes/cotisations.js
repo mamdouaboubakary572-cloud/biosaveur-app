@@ -258,4 +258,50 @@ router.get('/stats-mensuelles', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
-module.exports = router;
+// Liste des cotisations en retard (sans envoyer de SMS)
+router.get('/retards', auth, async (req, res) => {
+  try {
+    const cotisations = await Cotisation.find({ statut: 'en_cours' })
+      .populate('client', 'nom prenom telephone');
+    const retards = cotisations.filter(c =>
+      (c.montantCollecte || 0) < (c.montantObjectif || 0) * 0.5
+    );
+    res.json(retards);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+// Envoyer SMS de relance aux cotisations sélectionnées
+router.post('/relancer-retards', auth, async (req, res) => {
+  try {
+    const { cotisationIds } = req.body;
+    if (!cotisationIds || !cotisationIds.length) {
+      return res.status(400).json({ message: 'Aucune cotisation sélectionnée' });
+    }
+
+    const cotisations = await Cotisation.find({ _id: { $in: cotisationIds } })
+      .populate('client', 'nom prenom telephone');
+
+    let envoyes = 0;
+    let echecs = 0;
+
+    for (const c of cotisations) {
+      if (c.client && c.client.telephone) {
+        try {
+          const reste = (c.montantObjectif || 0) - (c.montantCollecte || 0);
+          await envoyerSMS('+225' + c.client.telephone,
+            `Bonjour ${c.client.prenom}, votre cotisation BIOSAVEUR de ${c.mois} est en retard. Reste à verser: ${reste} FCFA. Merci de régulariser.`);
+          envoyes++;
+        } catch (smsErr) {
+          console.error('SMS relance err pour', c.client.telephone, ':', smsErr.message);
+          echecs++;
+        }
+      }
+    }
+
+    res.json({ message: `${envoyes} SMS envoyé(s), ${echecs} échec(s)`, envoyes, echecs });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
