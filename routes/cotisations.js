@@ -305,26 +305,5 @@ router.post('/relancer-retards', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
-// TEMPORAIRE - Corriger les cotisations avec mois mal formaté
-router.get('/corriger-mois', auth, async (req, res) => {
-  try {
-    const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-    const cotisations = await Cotisation.find();
-    let corrigees = 0;
 
-    for (const c of cotisations) {
-      const moisStr = String(c.mois);
-      if (moisStr.includes('GMT') || moisStr.includes('00:00:00')) {
-        const d = new Date(c.mois);
-        c.mois = moisNoms[d.getMonth()] + ' ' + d.getFullYear();
-        await c.save();
-        corrigees++;
-      }
-    }
-
-    res.json({ message: `${corrigees} cotisation(s) corrigée(s)` });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
-  }
-});
 module.exports = router;
