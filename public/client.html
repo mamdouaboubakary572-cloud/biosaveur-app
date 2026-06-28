@@ -325,7 +325,99 @@ async function enregistrerLivraison() {
   }
 }
 
-async function chargerMessages() {
+/ ─── CATALOGUE PRODUITS & PANIER CLIENT ────────────────
+const CATALOGUE_PRODUITS = [
+  { nom: 'Poulet entier - Classic', prix: 2800, unite: 'pièce' },
+  { nom: 'Poulet entier - Premium', prix: 3000, unite: 'pièce' },
+  { nom: 'Poulet entier - Excellent', prix: 3500, unite: 'pièce' },
+  { nom: 'Blanc de poulet', prix: 4000, unite: 'kg' },
+  { nom: 'Gésiers', prix: 3000, unite: 'kg' },
+  { nom: 'Cuisse', prix: 3000, unite: 'kg' },
+  { nom: 'Aile', prix: 2800, unite: 'kg' },
+  { nom: 'Patte', prix: 1500, unite: 'kg' }
+];
+
+const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function remplirMoisClient() {
+  const select = document.getElementById('new-cot-mois');
+  const maintenant = new Date();
+  let options = '<option value="">-- Choisir le mois --</option>';
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() + i, 1);
+    const label = MOIS_NOMS[d.getMonth()] + ' ' + d.getFullYear();
+    options += '<option value="' + label + '">' + label + '</option>';
+  }
+  select.innerHTML = options;
+}
+
+function ajouterLignePanierClient() {
+  const div = document.getElementById('new-panier-lignes');
+  const ligneId = 'cligne-' + Date.now();
+  const optionsProduits = CATALOGUE_PRODUITS.map(p =>
+    '<option value="' + p.nom + '" data-prix="' + p.prix + '">' + p.nom + ' (' + nbFCFA(p.prix) + ' FCFA/' + p.unite + ')</option>'
+  ).join('');
+
+  const ligneHTML = '<div class="panier-ligne" id="' + ligneId + '" style="display:grid;grid-template-columns:2fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">' +
+    '<select class="panier-produit form-input" style="margin-bottom:0;" onchange="calculerTotalPanierClient()">' +
+    '<option value="">-- Produit --</option>' + optionsProduits +
+    '</select>' +
+    '<input type="number" class="panier-quantite form-input" style="margin-bottom:0;" placeholder="Qté" min="0" step="0.01" oninput="calculerTotalPanierClient()">' +
+    '<button type="button" style="background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:8px;cursor:pointer;" onclick="document.getElementById(\'' + ligneId + '\').remove(); calculerTotalPanierClient();">🗑</button>' +
+    '</div>';
+
+  div.insertAdjacentHTML('beforeend', ligneHTML);
+}
+
+function calculerTotalPanierClient() {
+  let total = 0;
+  document.querySelectorAll('#new-panier-lignes .panier-ligne').forEach(ligne => {
+    const select = ligne.querySelector('.panier-produit');
+    const qte = parseFloat(ligne.querySelector('.panier-quantite').value) || 0;
+    const prix = select.selectedOptions[0] ? parseFloat(select.selectedOptions[0].dataset.prix) || 0 : 0;
+    total += qte * prix;
+  });
+  document.getElementById('new-panier-total').textContent = nbFCFA(total);
+}
+
+function recupererArticlesPanierClient() {
+  const articles = [];
+  document.querySelectorAll('#new-panier-lignes .panier-ligne').forEach(ligne => {
+    const select = ligne.querySelector('.panier-produit');
+    const qte = parseFloat(ligne.querySelector('.panier-quantite').value) || 0;
+    if (select.value && qte > 0) {
+      const prix = parseFloat(select.selectedOptions[0].dataset.prix);
+      articles.push({ produit: select.value, quantite: qte, prixUnitaire: prix });
+    }
+  });
+  return articles;
+}
+
+async function creerNouvelleCotisation() {
+  const mois = document.getElementById('new-cot-mois').value;
+  const articles = recupererArticlesPanierClient();
+  if (!mois) { alert('Choisissez un mois'); return; }
+  if (!articles.length) { alert('Ajoutez au moins un article au panier'); return; }
+
+  const userId = JSON.parse(atob(token.split('.')[1])).id;
+  const res = await fetch('/api/cotisations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ clientId: userId, articles, mois })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Cotisation créée !');
+    document.getElementById('new-panier-lignes').innerHTML = '';
+    ajouterLignePanierClient();
+    document.getElementById('new-cot-mois').value = '';
+    calculerTotalPanierClient();
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+  async function chargerMessages() {
   try {
     const res = await fetch('/api/messages/mes-messages', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
@@ -358,6 +450,8 @@ function afficherQR() {
 chargerProfil();
 chargerCotisations();
 chargerMessages();
+remplirMoisClient();
+ajouterLignePanierClient();
 </script>
 </body>
 </html>
