@@ -326,7 +326,7 @@ tr:last-child td{border-bottom:none;}
     <div class="section" id="section-cotisations">
       <div class="section-header">
         <div class="section-title">🐔 Gestion des Cotisations</div>
-        <button class="btn btn-green" onclick="toggleForm('form-cotisation')">+ Nouvelle cotisation</button>
+        <button class="btn btn-green" onclick="toggleForm('form-cotisation'); remplirMoisDisponibles(); document.getElementById('panier-lignes').innerHTML=''; ajouterLignePanier();">+ Nouvelle cotisation</button>
       </div>
 
       <div class="form-box" id="form-cotisation">
