@@ -305,5 +305,31 @@ router.post('/relancer-retards', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
+// TEMPORAIRE - Migrer les anciennes cotisations vers le système articles[]
+router.get('/migrer-articles', auth, async (req, res) => {
+  try {
+    const cotisations = await Cotisation.find({ articles: { $exists: false } });
+    let migrees = 0;
+
+    for (const c of cotisations) {
+      if (c.objectifPoulets) {
+        const prixUnitaire = c.prixUnitaire || 2800;
+        const sousTotal = c.objectifPoulets * prixUnitaire;
+        c.articles = [{
+          produit: 'Poulet entier - Classic',
+          quantite: c.objectifPoulets,
+          prixUnitaire: prixUnitaire,
+          sousTotal: sousTotal
+        }];
+        await c.save();
+        migrees++;
+      }
+    }
+
+    res.json({ message: `${migrees} cotisation(s) migrée(s) vers le système articles[]` });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 
 module.exports = router;
