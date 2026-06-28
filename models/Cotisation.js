@@ -5,11 +5,18 @@ const versementSchema = new mongoose.Schema({
   modePaiement: { type: String, default: 'Wave' },
   reference: { type: String, default: '' }
 });
+const articleSchema = new mongoose.Schema({
+  produit: { type: String, required: true },
+  quantite: { type: Number, required: true },
+  prixUnitaire: { type: Number, required: true },
+  sousTotal: { type: Number, required: true }
+});
 const cotisationSchema = new mongoose.Schema({
   client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   mois: { type: String, required: true },
-  objectifPoulets: { type: Number, required: true },
-  prixUnitaire: { type: Number, default: 2800 },
+  articles: [articleSchema],
+  objectifPoulets: { type: Number },
+  prixUnitaire: { type: Number },
   montantObjectif: Number,
   montantCollecte: { type: Number, default: 0 },
   versements: [versementSchema],
