@@ -1092,7 +1092,7 @@ function afficherPVersements(data) {
   const modeColor = { 'Wave':'badge-green','Orange Money':'badge-amber','Moov Money':'badge-blue','Espèces':'badge-gray' };
   tbody.innerHTML = data.map(v => {
     const pct = Math.min(100, Math.round(((v.montantCollecte||0)/(v.montantObjectif||1))*100));
-    return '<tr><td><strong>'+(v.client?.nom||'?')+'</strong> '+(v.client?.prenom||'')+'</td><td>'+(v.mois||'–')+'</td><td style="color:var(--green);font-weight:600">'+nbFCFA(v.montant)+' FCFA</td><td><span class="badge '+(modeColor[v.modePaiement]||'badge-gray')+'">'+(v.modePaiement||'–')+'</span></td><td style="font-size:12px">'+(v.reference||'–')+'</td><td style="font-size:12px">'+(v.date?new Date(v.date).toLocaleDateString('fr-FR'):'–')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></td></tr>';
+    return '<tr><td><strong>'+(v.client?.nom||'?')+'</strong> '+(v.client?.prenom||'')+'</td><td>'+(v.mois||'–')+'</td><td style="color:var(--green);font-weight:600">'+nbFCFA(v.montant)+' FCFA</td><td><span class="badge '+(modeColor[v.modePaiement]||'badge-gray')+'">'+(v.modePaiement||'–')+'</span></td><td style="font-size:12px">'+(v.reference||'–')+'</td><td style="font-size:12px">'+(v.date?new Date(v.date).toLocaleDateString('fr-FR')+' à '+new Date(v.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'–')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></td></tr>';
   }).join('');
 }
 
