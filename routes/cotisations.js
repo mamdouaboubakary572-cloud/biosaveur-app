@@ -286,12 +286,11 @@ router.post('/relancer-retards', auth, async (req, res) => {
     let envoyes = 0;
     let echecs = 0;
 
-    for (const c of cotisations) {
+   for (const c of cotisations) {
       if (c.client && c.client.telephone) {
         try {
-          const reste = (c.montantObjectif || 0) - (c.montantCollecte || 0);
           await envoyerSMS('+225' + c.client.telephone,
-            `Bonjour ${c.client.prenom}, votre cotisation BIOSAVEUR de ${c.mois} est en retard. Reste à verser: ${reste} FCFA. Merci de régulariser.`);
+            `Bonjour, un petit coucou de BIOSAVEUR 🐓 Votre cotisation vous attend pour avancer vers votre objectif de poulets. Nous sommes disponibles pour toute question. Merci pour votre confiance !`);
           envoyes++;
         } catch (smsErr) {
           console.error('SMS relance err pour', c.client.telephone, ':', smsErr.message);
