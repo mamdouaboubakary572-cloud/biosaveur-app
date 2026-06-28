@@ -67,8 +67,9 @@ router.post('/:id/versement', auth, async (req, res) => {
       await cotisation.populate('client', 'nom prenom telephone');
       const cl = cotisation.client;
       if (cl && cl.telephone) {
+        const heureVersement = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         await envoyerSMS('+225' + cl.telephone,
-          `Bonjour ${cl.prenom}, versement de ${montant} FCFA enregistré. Total: ${cotisation.montantCollecte}/${cotisation.montantObjectif} FCFA.`);
+          `Bonjour ${cl.prenom}, versement de ${montant} FCFA enregistré à ${heureVersement}. Total: ${cotisation.montantCollecte}/${cotisation.montantObjectif} FCFA.`);
       }
     } catch (smsErr) { console.error('SMS versement err:', smsErr.message); }
     res.json({ message: 'Versement enregistré', cotisation });
