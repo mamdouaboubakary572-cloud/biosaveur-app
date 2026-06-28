@@ -100,8 +100,7 @@ router.put('/:id/livrer', auth, async (req, res) => {
     const nouvelleCotisation = new Cotisation({
       client: cotisationActuelle.client,
       mois: moisSuivant,
-      objectifPoulets: cotisationActuelle.objectifPoulets,
-      prixUnitaire: cotisationActuelle.prixUnitaire,
+      articles: cotisationActuelle.articles,
       montantObjectif: cotisationActuelle.montantObjectif,
       montantCollecte: 0,
       versements: [],
