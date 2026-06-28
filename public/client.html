@@ -265,9 +265,10 @@ async function chargerCotisations() {
 
     // Remplir selects
     const actives = mesCotisations.filter(c => c.statut !== 'livre');
-    const opts = '<option value="">-- Choisir ma cotisation --</option>' + actives.map(c =>
-      `<option value="${c._id}">${c.mois} — ${c.objectifPoulets} 🐔</option>`
-    ).join('');
+    const opts = '<option value="">-- Choisir ma cotisation --</option>' + actives.map(c => {
+  const pct = Math.min(100, Math.round((c.montantCollecte||0)/(c.montantObjectif||1)*100));
+  return `<option value="${c._id}">${c.mois} — ${pct}% versé (${nbFCFA(c.montantCollecte)}/${nbFCFA(c.montantObjectif)} FCFA)</option>`;
+}).join('');
     document.getElementById('pay-cotisation').innerHTML = opts;
     document.getElementById('liv-cotisation').innerHTML = opts;
 
