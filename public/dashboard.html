@@ -126,6 +126,9 @@ tr:last-child td{border-bottom:none;}
 #modal-qr.show{display:flex;}
 .modal-inner{background:white;padding:28px;border-radius:var(--radius-lg);text-align:center;max-width:320px;}
 .modal-inner h4{margin-bottom:14px;color:var(--green);}
+  /* MODAL RETARDS */
+#modal-retards{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-retards.show{display:flex;}
 
 /* CALENDRIER */
 .cal-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
@@ -588,6 +591,17 @@ tr:last-child td{border-bottom:none;}
     <h4>📱 QR Code Client</h4>
     <div id="qr-content"></div>
     <button class="btn btn-red btn-sm" style="margin-top:16px;" onclick="document.getElementById('modal-qr').classList.remove('show')">Fermer</button>
+  </div>
+</div>
+  <!-- MODAL RETARDS -->
+<div id="modal-retards">
+  <div class="modal-inner" style="max-width:420px;text-align:left;">
+    <h4>📱 Clients en retard</h4>
+    <div id="retards-list"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="confirmerRelance()">✓ Envoyer aux sélectionnés</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-retards').classList.remove('show')">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -1086,9 +1100,37 @@ function filtrerCotisationsPaiements() {
   afficherPCotisations(statut ? pCotisations.filter(c=>c.statut===statut) : pCotisations);
 }
 
-function relancerRetards() {
-  const retards = pCotisations.filter(c=>c.statut==='en_cours'&&(c.montantCollecte||0)<(c.montantObjectif||0)*0.5);
-  alert(retards.length ? '📱 SMS de relance envoyé à '+retards.length+' client(s) !' : 'Aucun retard détecté !');
+async function relancerRetards() {
+  const res = await fetch('/api/cotisations/retards', { headers: { 'Authorization': 'Bearer ' + token } });
+  const retards = await res.json();
+  if (!retards.length) { alert('Aucun retard détecté !'); return; }
+
+  const html = '<div style="max-height:300px;overflow-y:auto;margin-bottom:14px;">' +
+    retards.map(c =>
+      '<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<input type="checkbox" class="retard-check" value="' + c._id + '" checked>' +
+      '<span><strong>' + (c.client?.nom||'?') + ' ' + (c.client?.prenom||'') + '</strong> — ' + (c.client?.telephone||'') +
+      '<br><small style="color:var(--text-muted)">' + c.mois + ' · Reste ' + nbFCFA((c.montantObjectif||0)-(c.montantCollecte||0)) + ' FCFA</small></span>' +
+      '</label>'
+    ).join('') + '</div>';
+
+  document.getElementById('retards-list').innerHTML = html;
+  document.getElementById('modal-retards').classList.add('show');
+}
+
+async function confirmerRelance() {
+  const cotisationIds = Array.from(document.querySelectorAll('.retard-check:checked')).map(cb => cb.value);
+  if (!cotisationIds.length) { alert('Sélectionnez au moins un client'); return; }
+  if (!confirm('Envoyer le SMS de relance à ' + cotisationIds.length + ' client(s) ?')) return;
+
+  const res = await fetch('/api/cotisations/relancer-retards', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ cotisationIds })
+  });
+  const data = await res.json();
+  alert('✅ ' + data.message);
+  document.getElementById('modal-retards').classList.remove('show');
 }
 
 function exporterCSVPaiements() {
