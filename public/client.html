@@ -93,6 +93,21 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     <div class="section-title">💰 Mes Versements</div>
     <div id="versements-list"><div class="empty">Chargement...</div></div>
   </div>
+  
+  <!-- Nouvelle cotisation -->
+<div class="section-card">
+  <div class="section-title">🛒 Créer une nouvelle cotisation</div>
+  <select id="new-cot-mois" class="form-input">
+    <option value="">-- Choisir le mois --</option>
+  </select>
+  <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Articles du panier</div>
+    <div id="new-panier-lignes"></div>
+    <button type="button" class="btn-green" style="width:auto;padding:8px 14px;font-size:12px;margin-top:6px;" onclick="ajouterLignePanierClient()">+ Ajouter un article</button>
+    <div style="margin-top:10px;font-weight:700;font-size:15px;color:var(--green);">Total : <span id="new-panier-total">0</span> FCFA</div>
+  </div>
+  <button onclick="creerNouvelleCotisation()" class="btn-green">✓ Créer ma cotisation</button>
+</div>
 
   <!-- Paiement -->
   <div class="section-card">
