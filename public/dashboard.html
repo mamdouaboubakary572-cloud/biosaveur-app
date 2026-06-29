@@ -850,7 +850,7 @@ async function chargerCotisations() {
       '<td>' + (c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join('<br>') : (c.objectifPoulets||0) + ' 🐔') + '<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
       '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
       '<td style="min-width:100px"><small>' + pct + '%</small><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;background:' + couleur(c) + '"></div></div></td>' +
-      '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : '–') + '</td>' +
+      '<td>' + (c.jourLivraisonChoisi || '–') + '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + c.statut.replace('_',' ') + '</span></td>' +
       '<td><span class="badge ' + (c.encaisse ? 'badge-green' : 'badge-red') + '" style="cursor:pointer" onclick="toggleEncaisse(\'' + c._id + '\')">' + (c.encaisse ? '✅ Encaissé' : '❌ Non encaissé') + '</span></td>' +
       '<td style="white-space:nowrap">' +
