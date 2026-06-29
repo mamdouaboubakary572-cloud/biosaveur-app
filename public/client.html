@@ -129,48 +129,9 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
         💵 Espèces — Appeler BIOSAVEUR<br><small style="font-weight:400;font-size:11px;">0769476546</small>
       </a>
     </div>
-    <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px;">✅ Confirmer mon versement</div>
-      <select id="pay-cotisation" class="form-input">
-        <option value="">-- Choisir ma cotisation --</option>
-      </select>
-      <input type="number" id="pay-montant" placeholder="Montant versé (FCFA)" class="form-input">
-      <select id="pay-mode" class="form-input">
-        <option value="">-- Mode de paiement --</option>
-        <option value="Wave">Wave</option>
-        <option value="Orange Money">Orange Money</option>
-        <option value="Espèces">Espèces</option>
-      </select>
-      <input type="text" id="pay-reference" placeholder="Référence de transaction (optionnel)" class="form-input">
-      <button onclick="envoyerVersement()" class="btn-green">✅ Confirmer le versement</button>
-    </div>
+   
   </div>
 
-  <!-- Livraison -->
-  <div class="section-card">
-    <div class="section-title">🚚 Choisir ma date de livraison</div>
-    <select id="liv-cotisation" class="form-input">
-      <option value="">-- Choisir ma cotisation --</option>
-    </select>
-    <div style="margin-bottom:10px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Date souhaitée</label>
-      <input type="date" id="liv-date" class="form-input" style="margin-bottom:0;">
-    </div>
-    <div style="margin-bottom:10px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Heure souhaitée</label>
-      <select id="liv-heure" class="form-input" style="margin-bottom:0;">
-        <option value="">-- Heure --</option>
-        <option value="07:00">07h00 – Matin</option>
-        <option value="09:00">09h00 – Matin</option>
-        <option value="11:00">11h00 – Matin</option>
-        <option value="13:00">13h00 – Après-midi</option>
-        <option value="15:00">15h00 – Après-midi</option>
-        <option value="17:00">17h00 – Soir</option>
-        <option value="19:00">19h00 – Soir</option>
-      </select>
-    </div>
-    <button onclick="enregistrerLivraison()" class="btn-green">📅 Confirmer ma date de livraison</button>
-  </div>
 
   <!-- Messages -->
   <div class="section-card">
@@ -337,52 +298,6 @@ async function confirmerVersementCarte(cotisationId) {
 async function confirmerLivraisonCarte(cotisationId) {
   const date = document.getElementById('ldate-' + cotisationId).value;
   const heure = document.getElementById('lheure-' + cotisationId).value;
-  if (!date) { alert('Choisissez une date'); return; }
-  const dateObj = new Date(date);
-  const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
-  const res = await fetch('/api/cotisations/' + cotisationId + '/jour-livraison', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ jourLivraisonChoisi })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    alert('✅ Date de livraison enregistrée : ' + jourLivraisonChoisi);
-    chargerCotisations();
-  } else {
-    alert('Erreur : ' + data.message);
-  }
-}
-async function envoyerVersement() {
-  const cotisationId = document.getElementById('pay-cotisation').value;
-  const montant = parseInt(document.getElementById('pay-montant').value);
-  const modePaiement = document.getElementById('pay-mode').value;
-  const reference = document.getElementById('pay-reference').value;
-  if (!cotisationId) { alert('Choisissez une cotisation'); return; }
-  if (!montant || montant <= 0) { alert('Entrez un montant valide'); return; }
-  if (!modePaiement) { alert('Choisissez un mode de paiement'); return; }
-  if (!confirm('Confirmer un versement de ' + nbFCFA(montant) + ' FCFA ?')) return;
-  const res = await fetch('/api/cotisations/' + cotisationId + '/versement', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ montant, modePaiement, reference })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    alert('✅ Versement enregistré ! Merci.');
-    document.getElementById('pay-montant').value = '';
-    document.getElementById('pay-reference').value = '';
-    chargerCotisations();
-  } else {
-    alert('Erreur : ' + data.message);
-  }
-}
-
-async function enregistrerLivraison() {
-  const cotisationId = document.getElementById('liv-cotisation').value;
-  const date = document.getElementById('liv-date').value;
-  const heure = document.getElementById('liv-heure').value;
-  if (!cotisationId) { alert('Choisissez une cotisation'); return; }
   if (!date) { alert('Choisissez une date'); return; }
   const dateObj = new Date(date);
   const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
