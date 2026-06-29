@@ -416,7 +416,7 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div class="table-wrap" style="margin-bottom:16px;">
         <table>
-          <thead><tr><th>Client</th><th>Mois</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Date</th><th>Progression</th></tr></thead>
+          <thead><tr><th>Client</th><th>Mois</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Date</th><th>Progression</th><th>Action</th></tr></thead>
           <tbody id="p-versements-table"></tbody>
         </table>
       </div>
@@ -1086,13 +1086,23 @@ async function chargerPaiements() {
   afficherPCotisations(pCotisations);
 }
 
-function afficherPVersements(data) {
+async function supprimerVersement(cotisationId, versementId) {
+  if (!confirm('Supprimer ce versement ?')) return;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/versement/' + versementId, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (res.ok) { alert('✅ Versement supprimé'); chargerPaiements(); }
+  else alert('Erreur : ' + data.message);
+}
+  function afficherPVersements(data) {
   const tbody = document.getElementById('p-versements-table');
-  if (!data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-light)">Aucun versement</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-light)">Aucun versement</td></tr>'; return; }
   const modeColor = { 'Wave':'badge-green','Orange Money':'badge-amber','Moov Money':'badge-blue','Espèces':'badge-gray' };
   tbody.innerHTML = data.map(v => {
     const pct = Math.min(100, Math.round(((v.montantCollecte||0)/(v.montantObjectif||1))*100));
-    return '<tr><td><strong>'+(v.client?.nom||'?')+'</strong> '+(v.client?.prenom||'')+'</td><td>'+(v.mois||'–')+'</td><td style="color:var(--green);font-weight:600">'+nbFCFA(v.montant)+' FCFA</td><td><span class="badge '+(modeColor[v.modePaiement]||'badge-gray')+'">'+(v.modePaiement||'–')+'</span></td><td style="font-size:12px">'+(v.reference||'–')+'</td><td style="font-size:12px">'+(v.date?new Date(v.date).toLocaleDateString('fr-FR')+' à '+new Date(v.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'–')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></td></tr>';
+    return '<tr><td><strong>'+(v.client?.nom||'?')+'</strong> '+(v.client?.prenom||'')+'</td><td>'+(v.mois||'–')+'</td><td style="color:var(--green);font-weight:600">'+nbFCFA(v.montant)+' FCFA</td><td><span class="badge '+(modeColor[v.modePaiement]||'badge-gray')+'">'+(v.modePaiement||'–')+'</span></td><td style="font-size:12px">'+(v.reference||'–')+'</td><td style="font-size:12px">'+(v.date?new Date(v.date).toLocaleDateString('fr-FR')+' à '+new Date(v.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'–')+'</td><td><small>'+pct+'%</small><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></td><td><button class="btn btn-red btn-sm" onclick="supprimerVersement(\''+v.cotisationId+'\',\''+v._id+'\')">🗑</button></td></tr>';
   }).join('');
 }
 
