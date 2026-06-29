@@ -315,4 +315,35 @@ router.post('/relancer-retards', auth, async (req, res) => {
   }
 });
 
+// Historique des livraisons du client connecté (avec stats personnelles)
+router.get('/mon-historique', auth, async (req, res) => {
+  try {
+    const cotisationsLivrees = await Cotisation.find({ client: req.user.id, statut: 'livre' })
+      .sort({ dateLivraisonEffective: -1 });
+
+    const totalLivre = cotisationsLivrees.reduce((s, c) => s + (c.montantCollecte || 0), 0);
+    const nombreLivraisons = cotisationsLivrees.length;
+
+    let frequenceMoyenneJours = null;
+    const dates = cotisationsLivrees.filter(c => c.dateLivraisonEffective).map(c => c.dateLivraisonEffective);
+    if (dates.length > 1) {
+      const datesTriees = dates.sort((a, b) => new Date(a) - new Date(b));
+      let totalEcarts = 0;
+      for (let i = 1; i < datesTriees.length; i++) {
+        totalEcarts += (new Date(datesTriees[i]) - new Date(datesTriees[i - 1])) / (1000 * 60 * 60 * 24);
+      }
+      frequenceMoyenneJours = Math.round(totalEcarts / (datesTriees.length - 1));
+    }
+
+    res.json({
+      cotisationsLivrees,
+      totalLivre,
+      nombreLivraisons,
+      frequenceMoyenneJours
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
