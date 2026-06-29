@@ -346,4 +346,28 @@ router.get('/mon-historique', auth, async (req, res) => {
   }
 });
 
+// Supprimer un versement précis d'une cotisation
+router.delete('/:id/versement/:versementId', auth, async (req, res) => {
+  try {
+    const cotisation = await Cotisation.findById(req.params.id);
+    if (!cotisation) return res.status(404).json({ message: 'Cotisation non trouvée' });
+
+    const versement = cotisation.versements.find(v => v._id.toString() === req.params.versementId);
+    if (!versement) return res.status(404).json({ message: 'Versement non trouvé' });
+
+    cotisation.montantCollecte -= versement.montant;
+    if (cotisation.montantCollecte < 0) cotisation.montantCollecte = 0;
+    cotisation.versements = cotisation.versements.filter(v => v._id.toString() !== req.params.versementId);
+
+    if (cotisation.montantCollecte < cotisation.montantObjectif && cotisation.statut === 'complete') {
+      cotisation.statut = 'en_cours';
+    }
+
+    await cotisation.save();
+    res.json({ message: 'Versement supprimé', cotisation });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
