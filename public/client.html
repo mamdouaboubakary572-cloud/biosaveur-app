@@ -259,6 +259,7 @@ async function chargerCotisations() {
     document.getElementById('liv-cotisation').innerHTML = opts;
 
   } catch(e) {
+   console.error('ERREUR CHARGEMENT COTISATIONS:', e);
     document.getElementById('cotisations-list').innerHTML = '<div class="empty">Erreur de chargement</div>';
   }
 }
