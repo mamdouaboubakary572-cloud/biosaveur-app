@@ -249,14 +249,6 @@ async function chargerCotisations() {
       `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div><div class="v-date">${v.date?formatDateHeure(v.date):'–'}</div></div>`
     ).join('');
 
-    // Remplir selects
-    const actives = mesCotisations.filter(c => c.statut !== 'livre');
-    const opts = '<option value="">-- Choisir ma cotisation --</option>' + actives.map(c => {
-  const pct = Math.min(100, Math.round((c.montantCollecte||0)/(c.montantObjectif||1)*100));
-  return `<option value="${c._id}">${c.mois} — ${pct}% versé (${nbFCFA(c.montantCollecte)}/${nbFCFA(c.montantObjectif)} FCFA)</option>`;
-}).join('');
-    document.getElementById('pay-cotisation').innerHTML = opts;
-    document.getElementById('liv-cotisation').innerHTML = opts;
 
   } catch(e) {
    console.error('ERREUR CHARGEMENT COTISATIONS:', e);
