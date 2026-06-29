@@ -908,7 +908,7 @@ async function chargerLivraisons() {
   tbody.innerHTML = livraisons.length ? livraisons.map(c =>
     '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small>' + (c.client?.telephone||'') + '</small></td>' +
     '<td>' + c.mois + '</td><td>' + c.objectifPoulets + ' 🐔</td>' +
-    '<td>' + (c.jourLivraisonChoisi ? new Date(c.jourLivraisonChoisi).toLocaleDateString('fr-FR') : 'Non défini') + '</td>' +
+'<td>' + (c.jourLivraisonChoisi || 'Non défini') + '</td>' +
     '<td>' + (c.dateLivraisonEffective ? formatDate(c.dateLivraisonEffective) : '–') + '</td>' +
     '<td><span class="badge" style="background:' + (c.statut==='livre'?'var(--blue-light)':'var(--green-light)') + ';color:' + couleur(c) + '">' + c.statut.replace('_',' ') + '</span></td>' +
     '<td>' + (c.statut === 'complete' ? '<button class="btn btn-green btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Confirmer</button>' : '<span style="color:var(--text-light)">✅ Livrée</span>') + '</td></tr>'
