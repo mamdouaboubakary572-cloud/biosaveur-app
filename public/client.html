@@ -409,6 +409,31 @@ async function creerNouvelleCotisation() {
     alert('Erreur : ' + data.message);
   }
 }
+  async function chargerHistorique() {
+  try {
+    const res = await fetch('/api/cotisations/mon-historique', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+
+    document.getElementById('hist-total-livre').textContent = nbFCFA(data.totalLivre);
+    document.getElementById('hist-nb-livraisons').textContent = data.nombreLivraisons;
+    document.getElementById('hist-frequence').textContent = data.frequenceMoyenneJours ? data.frequenceMoyenneJours + ' j' : '–';
+
+    const div = document.getElementById('historique-list');
+    if (!data.cotisationsLivrees.length) {
+      div.innerHTML = '<div class="empty">Aucune livraison effectuée pour le moment</div>';
+    } else {
+      div.innerHTML = data.cotisationsLivrees.map(c => {
+        const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
+        return `<div class="cotisation-item">
+          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small></div><span class="badge badge-blue">Livrée 🚚</span></div>
+          <div class="cot-stats"><span>Total : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${c.dateLivraisonEffective?formatDate(c.dateLivraisonEffective):'–'}</span></div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    console.error('Erreur historique:', e);
+  }
+}
   async function chargerMessages() {
   try {
     const res = await fetch('/api/messages/mes-messages', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -442,6 +467,7 @@ function afficherQR() {
 chargerProfil();
 chargerCotisations();
 chargerMessages();
+chargerHistorique();
 remplirMoisClient();
 ajouterLignePanierClient();
 </script>
