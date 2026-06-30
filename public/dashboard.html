@@ -857,6 +857,7 @@ async function chargerCotisations() {
       '<td style="white-space:nowrap">' +
       (c.statut !== 'livre' ? '<button class="btn btn-green btn-sm" onclick="ajouterVersement(\'' + c._id + '\')">+ Versement</button> ' : '') +
       (c.statut === 'complete' ? '<button class="btn btn-blue btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Livrer</button> ' : '') +
+      '<button class="btn btn-amber btn-sm" onclick="genererBonLivraison(\'' + c._id + '\')">📄 Bon</button> ' +
       '<button class="btn btn-red btn-sm" onclick="supprimerCotisation(\'' + c._id + '\')">🗑</button></td></tr>';
   }).join('') || '<tr><td colspan="9" class="empty">Aucune cotisation</td></tr>';
 }
@@ -891,6 +892,156 @@ async function toggleEncaisse(id) {
   const res = await fetch('/api/cotisations/' + id + '/encaisse', { method:'PATCH', headers:{'Authorization':'Bearer '+token} });
   if (res.ok) { chargerCotisations(); }
   else alert('Erreur lors de la mise à jour du statut encaissé');
+}
+ async function genererBonLivraison(cotisationId) {
+  try {
+    const res = await fetch('/api/cotisations', { headers: { 'Authorization': 'Bearer ' + token } });
+    const cotisations = await res.json();
+    const c = cotisations.find(x => x._id === cotisationId);
+    if (!c) { alert('Cotisation introuvable'); return; }
+    _genererPDF(c);
+  } catch(err) {
+    alert('Erreur lors de la génération du bon');
+  }
+}
+
+function _genererPDF(c) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const vert = [26, 107, 60];
+  const or = [200, 150, 12];
+  const gris = [100, 100, 100];
+  const w = 210;
+
+  // En-tête fond vert
+  doc.setFillColor(...vert);
+  doc.rect(0, 0, w, 35, 'F');
+
+  // Logo texte (le vrai logo ne peut pas être chargé facilement en jsPDF sans base64)
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BIOSAVEUR', 14, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Poulet Molo Molo', 14, 23);
+  doc.text('Vous Savez Ce Que Vous Mangez', 14, 29);
+
+  // Numéro de bon
+  doc.setFontSize(10);
+  doc.text('BON DE LIVRAISON', w - 14, 16, { align: 'right' });
+  doc.setFontSize(9);
+  doc.text('Réf: BSV-' + c._id.slice(-6).toUpperCase(), w - 14, 23, { align: 'right' });
+  doc.text('Date: ' + new Date().toLocaleDateString('fr-FR'), w - 14, 29, { align: 'right' });
+
+  // Titre
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('BON DE LIVRAISON', w / 2, 45, { align: 'center' });
+
+  // Ligne séparatrice
+  doc.setDrawColor(...or);
+  doc.setLineWidth(0.8);
+  doc.line(14, 48, w - 14, 48);
+
+  // Infos client
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INFORMATIONS CLIENT', 14, 57);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Nom : ' + (c.client?.nom || '?') + ' ' + (c.client?.prenom || ''), 14, 65);
+  doc.text('Téléphone : ' + (c.client?.telephone || '–'), 14, 72);
+  doc.text('Mois de cotisation : ' + c.mois, 14, 79);
+  doc.text('Date de livraison : ' + (c.jourLivraisonChoisi || 'Non définie'), 14, 86);
+
+  // Tableau des articles
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DÉTAIL DE LA COMMANDE', 14, 98);
+
+  // En-tête tableau
+  doc.setFillColor(...vert);
+  doc.rect(14, 102, w - 28, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.text('Produit', 16, 107.5);
+  doc.text('Quantité', 110, 107.5);
+  doc.text('Prix unitaire', 140, 107.5);
+  doc.text('Sous-total', 175, 107.5);
+
+  // Lignes articles
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  let y = 115;
+  const articles = c.articles && c.articles.length ? c.articles : [{ produit: 'Poulet entier - Classic', quantite: c.objectifPoulets || 0, prixUnitaire: c.prixUnitaire || 2800, sousTotal: c.montantObjectif || 0 }];
+
+  articles.forEach((a, i) => {
+    if (i % 2 === 0) {
+      doc.setFillColor(245, 250, 247);
+      doc.rect(14, y - 5, w - 28, 8, 'F');
+    }
+    doc.text(a.produit, 16, y);
+    doc.text(String(a.quantite), 115, y, { align: 'right' });
+    doc.text(Number(a.prixUnitaire).toLocaleString('fr-FR') + ' FCFA', 162, y, { align: 'right' });
+    doc.text(Number(a.sousTotal || a.quantite * a.prixUnitaire).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+    y += 9;
+  });
+
+  // Ligne total
+  doc.setDrawColor(...vert);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, w - 14, y);
+  y += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('TOTAL OBJECTIF :', 14, y);
+  doc.text(Number(c.montantObjectif || 0).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+  y += 8;
+  doc.setTextColor(...vert);
+  doc.text('TOTAL VERSÉ :', 14, y);
+  doc.text(Number(c.montantCollecte || 0).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+  y += 8;
+
+  const reste = (c.montantObjectif || 0) - (c.montantCollecte || 0);
+  if (reste > 0) {
+    doc.setTextColor(192, 57, 43);
+    doc.text('RESTE À PAYER :', 14, y);
+    doc.text(Number(reste).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+  } else {
+    doc.setTextColor(...vert);
+    doc.text('✓ SOLDE COMPLET', 14, y);
+  }
+  y += 8;
+
+  // Statut encaissé
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Statut paiement : ' + (c.encaisse ? '✓ Encaissé' : '⚠ Non encaissé'), 14, y);
+  y += 15;
+
+  // Signatures
+  doc.setDrawColor(...gris);
+  doc.setLineWidth(0.3);
+  doc.line(14, y + 15, 80, y + 15);
+  doc.line(w - 80, y + 15, w - 14, y + 15);
+  doc.setFontSize(9);
+  doc.setTextColor(...gris);
+  doc.text('Signature Client', 47, y + 20, { align: 'center' });
+  doc.text('Cachet & Signature BIOSAVEUR', w - 47, y + 20, { align: 'center' });
+
+  // Pied de page
+  doc.setFillColor(...vert);
+  doc.rect(0, 282, w, 15, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text('BIOSAVEUR – Abobo N\'Dotré, Abidjan, Côte d\'Ivoire | Tél: 0769476546', w / 2, 290, { align: 'center' });
+
+  doc.save('Bon_Livraison_' + (c.client?.nom || 'client') + '_' + c.mois + '.pdf');
 }
   async function supprimerCotisation(id) {
   if (!confirm('Supprimer cette cotisation ?')) return;
