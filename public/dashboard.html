@@ -912,12 +912,12 @@ function _genererPDF(c) {
   const or = [200, 150, 12];
   const gris = [100, 100, 100];
   const w = 210;
+  const fmt = n => Number(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
   // En-tête fond vert
   doc.setFillColor(...vert);
   doc.rect(0, 0, w, 35, 'F');
 
-  // Logo texte (le vrai logo ne peut pas être chargé facilement en jsPDF sans base64)
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
@@ -927,11 +927,10 @@ function _genererPDF(c) {
   doc.text('Poulet Molo Molo', 14, 23);
   doc.text('Vous Savez Ce Que Vous Mangez', 14, 29);
 
-  // Numéro de bon
   doc.setFontSize(10);
   doc.text('BON DE LIVRAISON', w - 14, 16, { align: 'right' });
   doc.setFontSize(9);
-  doc.text('Réf: BSV-' + c._id.slice(-6).toUpperCase(), w - 14, 23, { align: 'right' });
+  doc.text('Ref: BSV-' + c._id.slice(-6).toUpperCase(), w - 14, 23, { align: 'right' });
   doc.text('Date: ' + new Date().toLocaleDateString('fr-FR'), w - 14, 29, { align: 'right' });
 
   // Titre
@@ -941,7 +940,6 @@ function _genererPDF(c) {
   doc.setTextColor(...vert);
   doc.text('BON DE LIVRAISON', w / 2, 45, { align: 'center' });
 
-  // Ligne séparatrice
   doc.setDrawColor(...or);
   doc.setLineWidth(0.8);
   doc.line(14, 48, w - 14, 48);
@@ -954,26 +952,24 @@ function _genererPDF(c) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.text('Nom : ' + (c.client?.nom || '?') + ' ' + (c.client?.prenom || ''), 14, 65);
-  doc.text('Téléphone : ' + (c.client?.telephone || '–'), 14, 72);
+  doc.text('Telephone : ' + (c.client?.telephone || '-'), 14, 72);
   doc.text('Mois de cotisation : ' + c.mois, 14, 79);
-  doc.text('Date de livraison : ' + (c.jourLivraisonChoisi || 'Non définie'), 14, 86);
+  doc.text('Date de livraison : ' + (c.jourLivraisonChoisi || 'Non definie'), 14, 86);
 
-  // Tableau des articles
+  // Tableau articles
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('DÉTAIL DE LA COMMANDE', 14, 98);
+  doc.text('DETAIL DE LA COMMANDE', 14, 98);
 
-  // En-tête tableau
   doc.setFillColor(...vert);
   doc.rect(14, 102, w - 28, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
   doc.text('Produit', 16, 107.5);
-  doc.text('Quantité', 110, 107.5);
+  doc.text('Quantite', 110, 107.5);
   doc.text('Prix unitaire', 140, 107.5);
   doc.text('Sous-total', 175, 107.5);
 
-  // Lignes articles
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
   let y = 115;
@@ -986,42 +982,42 @@ function _genererPDF(c) {
     }
     doc.text(a.produit, 16, y);
     doc.text(String(a.quantite), 115, y, { align: 'right' });
-    doc.text(Number(a.prixUnitaire).toLocaleString('fr-FR') + ' FCFA', 162, y, { align: 'right' });
-    doc.text(Number(a.sousTotal || a.quantite * a.prixUnitaire).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+    doc.text(fmt(a.prixUnitaire) + ' FCFA', 162, y, { align: 'right' });
+    doc.text(fmt(a.sousTotal || a.quantite * a.prixUnitaire) + ' FCFA', w - 16, y, { align: 'right' });
     y += 9;
   });
 
-  // Ligne total
+  // Totaux
   doc.setDrawColor(...vert);
   doc.setLineWidth(0.5);
   doc.line(14, y, w - 14, y);
   y += 7;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
   doc.text('TOTAL OBJECTIF :', 14, y);
-  doc.text(Number(c.montantObjectif || 0).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+  doc.text(fmt(c.montantObjectif) + ' FCFA', w - 16, y, { align: 'right' });
   y += 8;
   doc.setTextColor(...vert);
-  doc.text('TOTAL VERSÉ :', 14, y);
-  doc.text(Number(c.montantCollecte || 0).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+  doc.text('TOTAL VERSE :', 14, y);
+  doc.text(fmt(c.montantCollecte) + ' FCFA', w - 16, y, { align: 'right' });
   y += 8;
 
   const reste = (c.montantObjectif || 0) - (c.montantCollecte || 0);
   if (reste > 0) {
     doc.setTextColor(192, 57, 43);
-    doc.text('RESTE À PAYER :', 14, y);
-    doc.text(Number(reste).toLocaleString('fr-FR') + ' FCFA', w - 16, y, { align: 'right' });
+    doc.text('RESTE A PAYER :', 14, y);
+    doc.text(fmt(reste) + ' FCFA', w - 16, y, { align: 'right' });
   } else {
     doc.setTextColor(...vert);
-    doc.text('✓ SOLDE COMPLET', 14, y);
+    doc.text('SOLDE COMPLET', 14, y);
   }
   y += 8;
 
-  // Statut encaissé
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Statut paiement : ' + (c.encaisse ? '✓ Encaissé' : '⚠ Non encaissé'), 14, y);
+  doc.text('Statut paiement : ' + (c.encaisse ? 'Encaisse' : 'Non encaisse'), 14, y);
   y += 15;
 
   // Signatures
@@ -1039,7 +1035,7 @@ function _genererPDF(c) {
   doc.rect(0, 282, w, 15, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
-  doc.text('BIOSAVEUR – Abobo N\'Dotré, Abidjan, Côte d\'Ivoire | Tél: 0769476546', w / 2, 290, { align: 'center' });
+  doc.text('BIOSAVEUR - Abobo N\'Dotre, Abidjan, Cote d\'Ivoire | Tel: 0769476546', w / 2, 290, { align: 'center' });
 
   doc.save('Bon_Livraison_' + (c.client?.nom || 'client') + '_' + c.mois + '.pdf');
 }
