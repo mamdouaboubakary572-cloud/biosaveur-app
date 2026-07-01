@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   motDePasse: { type: String, required: true },
   role: { type: String, default: 'client' },
   qrCode: { type: String },
+  photo: { type: String, default: '' },
+localisation: { type: String, default: '' },
   dateCreation: { type: Date, default: Date.now }
 });
 
