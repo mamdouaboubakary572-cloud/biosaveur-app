@@ -4,6 +4,7 @@ const Cotisation = require('../models/Cotisation');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { envoyerSMS } = require('../services/sms');
+const Notification = require('../models/Notification');
  
 // Créer une cotisation
 router.post('/', auth, async (req, res) => {
@@ -35,6 +36,15 @@ router.post('/', auth, async (req, res) => {
           `Bonjour ${client.prenom}, votre cotisation BIOSAVEUR (${resume}) a été créée. Montant: ${montantObjectif} FCFA.`);
       }
     } catch (smsErr) { console.error('SMS err:', smsErr.message); }
+   
+   // Créer une notification pour le client
+    try {
+      await Notification.create({
+        userId: cotisation.client,
+        message: `Votre cotisation BIOSAVEUR de ${mois} a été créée. Montant objectif : ${montantObjectif} FCFA.`,
+        type: 'cotisation'
+      });
+    } catch (notifErr) { console.error('Erreur notification cotisation:', notifErr.message); }
     res.status(201).json({ message: 'Cotisation créée', cotisation });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
@@ -72,6 +82,15 @@ router.post('/:id/versement', auth, async (req, res) => {
           `Bonjour ${cl.prenom}, versement de ${montant} FCFA enregistré à ${heureVersement}. Total: ${cotisation.montantCollecte}/${cotisation.montantObjectif} FCFA.`);
       }
     } catch (smsErr) { console.error('SMS versement err:', smsErr.message); }
+   
+   // Créer une notification pour le client
+    try {
+      await Notification.create({
+        userId: cotisation.client,
+        message: `Votre versement de ${montant} FCFA a été enregistré pour votre cotisation de ${cotisation.mois}.`,
+        type: 'versement'
+      });
+    } catch (notifErr) { console.error('Erreur notification versement:', notifErr.message); }
     res.json({ message: 'Versement enregistré', cotisation });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
@@ -111,7 +130,15 @@ router.put('/:id/livrer', auth, async (req, res) => {
       cotisationPrecedenteId: cotisationActuelle._id
     });
     await nouvelleCotisation.save();
-
+   
+// Créer une notification pour le client
+    try {
+      await Notification.create({
+        userId: cotisationActuelle.client,
+        message: `Votre commande de ${cotisationActuelle.mois} a été livrée. Merci pour votre confiance ! Une nouvelle cotisation a été créée pour le mois suivant.`,
+        type: 'livraison'
+      });
+    } catch (notifErr) { console.error('Erreur notification livraison:', notifErr.message); }
     res.json({
       message: 'Livraison confirmée, nouvelle cotisation créée',
       cotisationLivree: cotisationActuelle,
