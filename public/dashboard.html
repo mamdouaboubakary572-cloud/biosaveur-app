@@ -846,7 +846,7 @@ async function chargerCotisations() {
   tbody.innerHTML = data.map(c => {
     const pct = Math.min(100, Math.round((c.montantCollecte / (c.montantObjectif||1)) * 100));
     const badgeClass = c.statut === 'complete' ? 'badge-green' : c.statut === 'livre' ? 'badge-blue' : 'badge-amber';
-    return '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small style="color:var(--text-muted)">' + (c.client?.telephone||'') + '</small></td>' +
+    return '<tr><td><div style="display:flex;align-items:center;gap:8px;">' +       (c.client?.photo ? '<img src="' + c.client.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">' : '<div style="width:36px;height:36px;border-radius:50%;background:var(--green);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;">' + (c.client?.nom?.[0]||'?') + '</div>') +       '<div><strong>' + (c.client?.nom||'?') + '</strong><br><small style="color:var(--text-muted)">' + (c.client?.telephone||'') + '</small></div></div></td>' +
       '<td>' + c.mois + '</td>' +
       '<td>' + (c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join('<br>') : (c.objectifPoulets||0) + ' 🐔') + '<br><small>' + nbFCFA(c.montantObjectif) + ' FCFA</small></td>' +
       '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
