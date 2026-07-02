@@ -45,7 +45,7 @@ router.post('/', auth, async (req, res) => {
 router.get('/', auth, async (req, res) => {
   try {
     const cotisations = await Cotisation.find()
-      .populate('client', 'nom prenom telephone jourLivraison')
+      .populate('client', 'nom prenom telephone jourLivraison photo localisation')
       .sort({ dateCreation: -1 });
     res.json(cotisations);
   } catch (err) {
