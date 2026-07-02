@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const auth = require('../middleware/auth');
+const Notification = require('../models/Notification');
 
 // Client: envoyer un message
 router.post('/', auth, async (req, res) => {
@@ -38,7 +39,14 @@ router.get('/', auth, async (req, res) => {
 router.put('/:id/repondre', auth, async (req, res) => {
   try {
     const message = await Message.findByIdAndUpdate(req.params.id, { reponse: req.body.reponse, lu: true, dateReponse: new Date() }, { new: true });
-    res.json({ message: 'Réponse envoyée', data: message });
+    try {
+      await Notification.create({
+        userId: message.client,
+        message: `BIOSAVEUR a repondu a votre message : "${req.body.reponse}"`,
+        type: 'message'
+      });
+    } catch (notifErr) { console.error('Erreur notification message:', notifErr.message); }
+    res.json({ message: 'Reponse envoyee', data: message });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
