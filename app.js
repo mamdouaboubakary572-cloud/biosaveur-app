@@ -51,6 +51,7 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/cotisations', require('./routes/cotisations'));
 app.use('/api/commandes', require('./routes/commandes'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
