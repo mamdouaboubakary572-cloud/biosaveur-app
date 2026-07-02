@@ -49,6 +49,8 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 .msg-reply{margin-top:8px;background:var(--green-light);border-radius:6px;padding:8px;font-size:12px;color:var(--green);}
 #modal-qr{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
 #modal-qr.show{display:flex;}
+#modal-profil{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-profil.show{display:flex;}
 .modal-inner{background:white;padding:28px;border-radius:14px;text-align:center;max-width:300px;width:90%;}
 .modal-inner h4{margin-bottom:14px;color:var(--green);}
 .modal-close{margin-top:16px;background:var(--red-light);color:var(--red);border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;}
@@ -72,7 +74,8 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
       <h2 id="profile-nom">Chargement...</h2>
       <p id="profile-tel">–</p>
     </div>
-    <button class="qr-btn" onclick="afficherQR()">📱 Mon QR</button>
+    <button onclick="afficherQR()" class="btn-qr">🔲 Mon QR</button>
+<button onclick="ouvrirModalProfil()" class="btn-qr" style="background:var(--green-light);color:var(--green);">✏️ Modifier</button>
   </div>
 
   <!-- Stats -->
@@ -164,6 +167,53 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('show')">Fermer</button>
   </div>
 </div>
+  
+  <!-- Modal Profil -->
+<div id="modal-profil">
+  <div class="modal-inner" style="max-width:400px;text-align:left;">
+    <h4>✏️ Modifier mon profil</h4>
+
+    <!-- Photo de profil -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="profil-avatar-preview" style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:32px;color:white;margin:0 auto 10px;overflow:hidden;">
+        <span id="profil-avatar-lettre"></span>
+        <img id="profil-avatar-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;">
+      </div>
+      <label style="cursor:pointer;color:var(--green);font-size:13px;font-weight:600;">
+        📷 Changer la photo
+        <input type="file" id="profil-photo-input" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
+      </label>
+    </div>
+
+    <!-- Nom & Prénom -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Nom</label>
+      <input type="text" id="profil-nom" class="form-input" style="margin-bottom:0;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Prénom</label>
+      <input type="text" id="profil-prenom" class="form-input" style="margin-bottom:0;">
+    </div>
+
+    <!-- Localisation -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">📍 Quartier / Commune</label>
+      <input type="text" id="profil-localisation" class="form-input" placeholder="Ex: Abobo, Cocody, Yopougon..." style="margin-bottom:0;">
+    </div>
+
+    <!-- Mot de passe -->
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">🔒 Changer le mot de passe</div>
+      <input type="password" id="profil-ancien-mdp" class="form-input" placeholder="Ancien mot de passe">
+      <input type="password" id="profil-nouveau-mdp" class="form-input" placeholder="Nouveau mot de passe">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-green" style="flex:1;" onclick="enregistrerProfil()">✓ Enregistrer</button>
+      <button class="btn-ghost" onclick="document.getElementById('modal-profil').classList.remove('show')" style="flex:1;background:var(--border);border:none;border-radius:8px;padding:10px;cursor:pointer;">Annuler</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const token = localStorage.getItem('token');
@@ -177,7 +227,81 @@ function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); } funct
 
 let monQRCode = '';
 let mesCotisations = [];
+  
+function ouvrirModalProfil() {
+  const nom = document.getElementById('profile-nom').textContent.split(' ')[0] || '';
+  const prenom = document.getElementById('profile-nom').textContent.split(' ')[1] || '';
+  document.getElementById('profil-nom').value = nom;
+  document.getElementById('profil-prenom').value = prenom;
+  document.getElementById('profil-ancien-mdp').value = '';
+  document.getElementById('profil-nouveau-mdp').value = '';
+  document.getElementById('modal-profil').classList.add('show');
+}
 
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('profil-avatar-img');
+      const lettre = document.getElementById('profil-avatar-lettre');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      lettre.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function enregistrerProfil() {
+  const nom = document.getElementById('profil-nom').value.trim();
+  const prenom = document.getElementById('profil-prenom').value.trim();
+  const localisation = document.getElementById('profil-localisation').value.trim();
+  const ancienMdp = document.getElementById('profil-ancien-mdp').value;
+  const nouveauMdp = document.getElementById('profil-nouveau-mdp').value;
+  const photoInput = document.getElementById('profil-photo-input');
+
+  // Mettre à jour nom, prénom, localisation, photo
+  let photo = undefined;
+  if (photoInput.files && photoInput.files[0]) {
+    photo = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsDataURL(photoInput.files[0]);
+    });
+  }
+
+  const bodyProfil = {};
+  if (nom) bodyProfil.nom = nom;
+  if (prenom) bodyProfil.prenom = prenom;
+  if (localisation !== undefined) bodyProfil.localisation = localisation;
+  if (photo) bodyProfil.photo = photo;
+
+  if (Object.keys(bodyProfil).length > 0) {
+    const res = await fetch('/api/auth/profil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(bodyProfil)
+    });
+    const data = await res.json();
+    if (!res.ok) { alert('Erreur : ' + data.message); return; }
+  }
+
+  // Changer mot de passe si rempli
+  if (ancienMdp && nouveauMdp) {
+    const resMdp = await fetch('/api/auth/changer-mdp', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ ancienMdp, nouveauMdp })
+    });
+    const dataMdp = await resMdp.json();
+    if (!resMdp.ok) { alert('Erreur mot de passe : ' + dataMdp.message); return; }
+  }
+
+  alert('✅ Profil mis à jour !');
+  document.getElementById('modal-profil').classList.remove('show');
+  chargerProfil();
+}
+  
 async function chargerProfil() {
   try {
     const res = await fetch('/api/auth/profil', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -185,7 +309,7 @@ async function chargerProfil() {
     const data = await res.json();
     document.getElementById('profile-nom').textContent = data.nom + ' ' + data.prenom;
     document.getElementById('profile-tel').textContent = '📞 ' + data.telephone;
-    document.getElementById('avatar').textContent = data.nom[0].toUpperCase();
+    if (data.photo) {       const av = document.getElementById('avatar');       av.innerHTML = '<img src="' + data.photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';     } else {       document.getElementById('avatar').textContent = data.nom[0].toUpperCase();     }     if (data.localisation) {       document.getElementById('profil-localisation') && (document.getElementById('profil-localisation').value = data.localisation);     }
     document.getElementById('user-name').textContent = data.prenom;
     monQRCode = data.qrCode || '';
   } catch(e) {
