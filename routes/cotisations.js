@@ -113,12 +113,27 @@ router.put('/:id/livrer', auth, async (req, res) => {
     await cotisationActuelle.save();
 
     const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-    const moisActuel = new Date(cotisationActuelle.mois || Date.now());
-    const moisSuivantDate = new Date(moisActuel);
-    moisSuivantDate.setMonth(moisSuivantDate.getMonth() + 1);
-    const moisSuivant = moisNoms[moisSuivantDate.getMonth()] + ' ' + moisSuivantDate.getFullYear();
+    let moisSuivant;
+    try {
+      const parts = (cotisationActuelle.mois || '').split(' ');
+      const nomMois = parts[0];
+      const annee = parseInt(parts[1]) || new Date().getFullYear();
+      const moisIndex = moisNoms.findIndex(m => m.toLowerCase() === nomMois.toLowerCase());
+      if (moisIndex !== -1) {
+        const moisSuivantIndex = (moisIndex + 1) % 12;
+        const anneeSuivante = moisIndex === 11 ? annee + 1 : annee;
+        moisSuivant = moisNoms[moisSuivantIndex] + ' ' + anneeSuivante;
+      } else {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        moisSuivant = moisNoms[d.getMonth()] + ' ' + d.getFullYear();
+      }
+    } catch(e) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + 1);
+      moisSuivant = moisNoms[d.getMonth()] + ' ' + d.getFullYear();
+    }
     const nouvelleCotisation = new Cotisation({
-      client: cotisationActuelle.client,
       mois: moisSuivant,
       articles: cotisationActuelle.articles,
       montantObjectif: cotisationActuelle.montantObjectif,
