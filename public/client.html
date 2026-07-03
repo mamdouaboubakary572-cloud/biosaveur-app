@@ -50,6 +50,8 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 #modal-qr{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
 #modal-qr.show{display:flex;}
 #modal-profil{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-notifs{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-notifs.show{display:flex;}
 #modal-profil.show{display:flex;}
 .modal-inner{background:white;padding:28px;border-radius:14px;text-align:center;max-width:300px;width:90%;}
 .modal-inner h4{margin-bottom:14px;color:var(--green);}
@@ -75,6 +77,10 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
       <p id="profile-tel">–</p>
     </div>
     <button onclick="afficherQR()" class="btn-qr">🔲 Mon QR</button>
+<button onclick="ouvrirNotifications()" class="btn-qr" style="position:relative;background:var(--green-light);color:var(--green);">
+  🔔
+  <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:red;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">0</span>
+</button>
 <button onclick="ouvrirModalProfil()" class="btn-qr" style="background:var(--green-light);color:var(--green);">✏️ Modifier</button>
   </div>
 
@@ -165,6 +171,18 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     <div id="qr-content"></div>
     <p style="font-size:11px;color:#8fa896;margin-top:10px;">Présentez ce QR code à BIOSAVEUR</p>
     <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('show')">Fermer</button>
+  </div>
+</div>
+  
+  <!-- Modal Notifications -->
+<div id="modal-notifs">
+  <div class="modal-inner" style="max-width:400px;text-align:left;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h4 style="margin:0;">🔔 Mes Notifications</h4>
+      <button onclick="marquerToutLu()" style="font-size:11px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600;">Tout marquer lu</button>
+    </div>
+    <div id="notifs-list"><div class="empty">Chargement...</div></div>
+    <button class="btn-ghost" onclick="document.getElementById('modal-notifs').classList.remove('show')" style="width:100%;margin-top:12px;background:var(--border);border:none;border-radius:8px;padding:10px;cursor:pointer;">Fermer</button>
   </div>
 </div>
   
@@ -546,6 +564,65 @@ async function creerNouvelleCotisation() {
     alert('Erreur : ' + data.message);
   }
 }
+  async function chargerNotifications() {
+  try {
+    const res = await fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const badge = document.getElementById('notif-badge');
+    if (data.nonLues > 0) {
+      badge.textContent = data.nonLues;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+async function ouvrirNotifications() {
+  document.getElementById('modal-notifs').classList.add('show');
+  try {
+    const res = await fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const div = document.getElementById('notifs-list');
+    if (!data.notifications.length) {
+      div.innerHTML = '<div class="empty">Aucune notification</div>';
+    } else {
+      div.innerHTML = data.notifications.map(n =>
+        `<div onclick="marquerLu('${n._id}', this)" style="padding:10px;border-bottom:1px solid var(--border);cursor:pointer;background:${n.lu ? 'white' : 'var(--green-light)'};border-radius:6px;margin-bottom:6px;">
+          <div style="font-size:13px;${n.lu ? '' : 'font-weight:600;'}">${n.message}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${formatDateHeure(n.createdAt)}</div>
+        </div>`
+      ).join('');
+    }
+    // Mettre à jour le badge
+    chargerNotifications();
+  } catch(e) {}
+}
+
+async function marquerLu(id, el) {
+  try {
+    await fetch('/api/notifications/' + id + '/lire', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    el.style.background = 'white';
+    el.style.fontWeight = 'normal';
+    chargerNotifications();
+  } catch(e) {}
+}
+
+async function marquerToutLu() {
+  try {
+    await fetch('/api/notifications/lire-tout', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    document.querySelectorAll('#notifs-list > div').forEach(el => {
+      el.style.background = 'white';
+    });
+    chargerNotifications();
+  } catch(e) {}
+}
   async function chargerHistorique() {
   try {
     const res = await fetch('/api/cotisations/mon-historique', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -605,6 +682,7 @@ chargerProfil();
 chargerCotisations();
 chargerMessages();
 chargerHistorique();
+chargerNotifications();
 remplirMoisClient();
 ajouterLignePanierClient();
 </script>
