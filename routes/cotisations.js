@@ -412,4 +412,43 @@ router.delete('/:id/versement/:versementId', auth, async (req, res) => {
   }
 });
 
+// Stats avancées pour le dashboard admin
+router.get('/stats-avancees', auth, async (req, res) => {
+  try {
+    const cotisations = await Cotisation.find().populate('client', 'nom prenom telephone');
+    const versements = [];
+    cotisations.forEach(c => (c.versements||[]).forEach(v => versements.push({...v.toObject(), clientId: c.client?._id, clientNom: (c.client?.nom||'?') + ' ' + (c.client?.prenom||''), moisCot: c.mois})));
+
+    // Top 5 clients par total versé
+    const totauxParClient = {};
+    versements.forEach(v => {
+      const id = v.clientId?.toString();
+      if (!id) return;
+      if (!totauxParClient[id]) totauxParClient[id] = { nom: v.clientNom, total: 0 };
+      totauxParClient[id].total += v.montant || 0;
+    });
+    const top5 = Object.values(totauxParClient).sort((a, b) => b.total - a.total).slice(0, 5);
+
+    // Taux de complétion
+    const terminees = cotisations.filter(c => c.statut === 'livre' || c.statut === 'complete');
+    const tauxCompletion = cotisations.length > 0 ? Math.round((terminees.length / cotisations.length) * 100) : 0;
+
+    // Revenu prévisionnel (cotisations en cours)
+    const enCours = cotisations.filter(c => c.statut === 'en_cours');
+    const revenuPrevisionnel = enCours.reduce((s, c) => s + ((c.montantObjectif||0) - (c.montantCollecte||0)), 0);
+
+    // Carte de chaleur (versements par jour de semaine et heure)
+    const chaleur = Array(7).fill(null).map(() => Array(24).fill(0));
+    versements.forEach(v => {
+      if (!v.date) return;
+      const d = new Date(v.date);
+      chaleur[d.getDay()][d.getHours()]++;
+    });
+
+    res.json({ top5, tauxCompletion, revenuPrevisionnel, chaleur });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
