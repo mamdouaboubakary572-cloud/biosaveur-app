@@ -275,17 +275,30 @@ tr:last-child td{border-bottom:none;}
 
       <div class="charts-row" style="grid-template-columns:1fr 1fr;">
         <div class="chart-card">
-          <div class="chart-title">🏆 Top clients (poulets objectif)</div>
-          <div id="top-clients-list">
+          <div class="chart-title">🏆 Top 5 clients (total versé)</div>
+          <div id="top5-clients">
+            <div class="empty">Chargement...</div>
+          </div>
             <div class="empty"><div class="empty-icon">⏳</div>Chargement...</div>
           </div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">🔔 Alertes & actions rapides</div>
-          <div id="alertes-list">
-            <div class="empty"><div class="empty-icon">⏳</div>Chargement...</div>
+          <div class="chart-title">📊 Stats avancées</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="stat-card" style="padding:10px;">
+              <div class="s-label">✅ Taux complétion</div>
+              <div class="s-value" id="stat-taux-completion" style="color:var(--green);font-size:22px;">0%</div>
+            </div>
+            <div class="stat-card" style="padding:10px;">
+              <div class="s-label">💰 Revenu prévisionnel</div>
+              <div class="s-value" id="stat-revenu-previsionnel" style="color:var(--gold);font-size:16px;">0</div>
+            </div>
           </div>
         </div>
+      </div>
+    <div class="chart-card" style="margin-top:16px;">
+        <div class="chart-title">🌡️ Carte de chaleur des versements (jour/heure)</div>
+        <div id="chaleur-versements"><div class="empty">Chargement...</div></div>
       </div>
     </div>
 
@@ -647,11 +660,12 @@ function afficherTab(tab) {
 let chartCollecte, chartStatut, chartEvol;
 async function chargerDashboard() {
   const h = { headers: { 'Authorization': 'Bearer ' + token } };
-  const [clients, cotisations, messages, statsMensuelles] = await Promise.all([
+  const [clients, cotisations, messages, statsMensuelles, statsAvancees] = await Promise.all([
     fetch('/api/admin/clients', h).then(r => r.json()),
     fetch('/api/cotisations', h).then(r => r.json()),
     fetch('/api/messages', h).then(r => r.json()),
-    fetch('/api/cotisations/stats-mensuelles', h).then(r => r.json())
+    fetch('/api/cotisations/stats-mensuelles', h).then(r => r.json()),
+    fetch('/api/cotisations/stats-avancees', h).then(r => r.json())
   ]);
   const actives = cotisations.filter(c => c.statut === 'en_cours');
   const completes = cotisations.filter(c => c.statut === 'complete');
@@ -665,6 +679,42 @@ async function chargerDashboard() {
   document.getElementById('total-messages').textContent = nonLus;
   document.getElementById('total-completes').textContent = completes.length;
   document.getElementById('total-livrees').textContent = livrees.length;
+  // Stats avancées
+  document.getElementById('stat-taux-completion').textContent = statsAvancees.tauxCompletion + '%';
+  document.getElementById('stat-revenu-previsionnel').textContent = nbFCFA(statsAvancees.revenuPrevisionnel) + ' FCFA';
+  
+  // Top 5 clients
+  const top5El = document.getElementById('top5-clients');
+  if (top5El) {
+    top5El.innerHTML = statsAvancees.top5.map((c, i) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:var(--green);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${i+1}</span>
+          <span style="font-weight:600;font-size:13px;">${c.nom}</span>
+        </div>
+        <span style="color:var(--green);font-weight:700;font-size:13px;">${nbFCFA(c.total)} FCFA</span>
+      </div>`
+    ).join('');
+  }
+
+  // Carte de chaleur
+  const joursNoms = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const chaleurEl = document.getElementById('chaleur-versements');
+  if (chaleurEl) {
+    const maxVal = Math.max(...statsAvancees.chaleur.flat(), 1);
+    let html = '<div style="display:grid;grid-template-columns:30px repeat(24,1fr);gap:2px;font-size:9px;">';
+    html += '<div></div>' + Array.from({length:24}, (_, h) => h % 3 === 0 ? `<div style="text-align:center;color:var(--text-muted)">${h}h</div>` : '<div></div>').join('');
+    statsAvancees.chaleur.forEach((jour, j) => {
+      html += `<div style="color:var(--text-muted);line-height:16px;">${joursNoms[j]}</div>`;
+      jour.forEach(val => {
+        const intensity = Math.round((val / maxVal) * 255);
+        const color = val === 0 ? '#f5f5f5' : `rgb(${255-intensity}, ${intensity+100}, ${255-intensity})`;
+        html += `<div style="height:16px;background:${color};border-radius:2px;" title="${val} versement(s)"></div>`;
+      });
+    });
+    html += '</div>';
+    chaleurEl.innerHTML = html;
+  }
   document.getElementById('notif-messages').textContent = nonLus;
   document.getElementById('notif-messages').style.display = nonLus > 0 ? 'inline' : 'none';
 
