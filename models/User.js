@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
   qrCode: { type: String },
   photo: { type: String, default: '' },
 localisation: { type: String, default: '' },
+  codeParrainage: { type: String, unique: true, sparse: true },
+parrainId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+points: { type: Number, default: 0 },
   dateCreation: { type: Date, default: Date.now }
 });
 
