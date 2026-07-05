@@ -121,4 +121,20 @@ router.put('/profil', auth, async (req, res) => {
   }
 });
 
+// Infos parrainage du client connecté
+router.get('/parrainage', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('nom prenom codeParrainage points');
+    const filleuls = await User.find({ parrainId: req.user.id }).select('nom prenom dateCreation');
+    res.json({
+      codeParrainage: user.codeParrainage,
+      points: user.points || 0,
+      pointsEnFCFA: Math.floor((user.points || 0) / 1000) * 2800,
+      filleuls: filleuls.map(f => ({ nom: f.nom + ' ' + f.prenom, date: f.dateCreation }))
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
