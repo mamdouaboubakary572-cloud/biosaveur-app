@@ -83,6 +83,17 @@ router.post('/:id/versement', auth, async (req, res) => {
       }
     } catch (smsErr) { console.error('SMS versement err:', smsErr.message); }
    
+   // Créditer le parrain de 200 points si c'est le premier versement du filleul
+    try {
+      const clientUser = await User.findById(cotisation.client);
+      if (clientUser && clientUser.parrainId) {
+        const totalVersements = cotisation.versements.length;
+        if (totalVersements === 1) {
+          await User.findByIdAndUpdate(clientUser.parrainId, { $inc: { points: 200 } });
+        }
+      }
+    } catch (parrainErr) { console.error('Erreur points parrain:', parrainErr.message); }
+   
    // Créer une notification pour le client
     try {
       await Notification.create({
