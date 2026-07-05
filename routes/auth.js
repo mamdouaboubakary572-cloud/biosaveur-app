@@ -9,18 +9,34 @@ const auth = require('../middleware/auth');
 // Inscription client
 router.post('/inscription', async (req, res) => {
   try {
-    const { nom, prenom, telephone, email, motDePasse } = req.body;
+    const { nom, prenom, telephone, email, motDePasse, codeParrainSaisi } = req.body;
     const existant = await User.findOne({ telephone });
     if (existant) return res.status(400).json({ message: 'Ce numéro existe déjà' });
     const hash = await bcrypt.hash(motDePasse, 10);
-    const user = new User({ nom, prenom, telephone, email, motDePasse: hash });
+
+    // Générer un code de parrainage unique
+    const codeParrainage = 'BSV-' + nom.substring(0, 4).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+    // Chercher le parrain si un code a été saisi
+    let parrainId = null;
+    if (codeParrainSaisi) {
+      const parrain = await User.findOne({ codeParrainage: codeParrainSaisi.trim().toUpperCase() });
+      if (parrain) {
+        parrainId = parrain._id;
+        // Créditer le parrain de 500 points
+        parrain.points = (parrain.points || 0) + 500;
+        await parrain.save();
+      }
+    }
+
+    const user = new User({ nom, prenom, telephone, email, motDePasse: hash, codeParrainage, parrainId });
     await user.save();
-    const qrData = `https://biosaveur-app-production.up.railway.app/qr.html?id=${user._id}`;
+    const qrData = `https://biosaveur-app.onrender.com/qr.html?id=${user._id}`;
     const qrCode = await QRCode.toDataURL(qrData);
     user.qrCode = qrCode;
     await user.save();
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ message: 'Inscription réussie', token, user: { nom, prenom, telephone, qrCode } });
+    res.status(201).json({ message: 'Inscription réussie', token, user: { nom, prenom, telephone, qrCode, codeParrainage, points: 0 } });
   } catch (err) {
     console.log('ERREUR INSCRIPTION:', err.message);
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
