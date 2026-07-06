@@ -137,4 +137,20 @@ router.get('/parrainage', auth, async (req, res) => {
   }
 });
 
+// TEMPORAIRE - Générer des codes de parrainage pour les clients existants
+router.get('/generer-codes-parrainage', auth, async (req, res) => {
+  try {
+    const users = await User.find({ codeParrainage: { $exists: false } });
+    let generes = 0;
+    for (const user of users) {
+      user.codeParrainage = 'BSV-' + user.nom.substring(0, 4).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+      await user.save();
+      generes++;
+    }
+    res.json({ message: `${generes} code(s) généré(s)` });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
