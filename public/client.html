@@ -151,6 +151,40 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   </div>
   <div id="historique-list"><div class="empty">Chargement...</div></div>
 </div>
+  
+  <!-- Parrainage -->
+<div class="section-card">
+  <div class="section-title">🤝 Mon Parrainage</div>
+  
+  <!-- Code de parrainage -->
+  <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Mon code de parrainage</div>
+    <div id="mon-code-parrainage" style="font-size:22px;font-weight:700;color:var(--green);letter-spacing:2px;">–</div>
+    <button onclick="copierCode()" style="margin-top:8px;background:var(--green);color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📋 Copier</button>
+  </div>
+
+  <!-- Points -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="stat-card" style="padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:700;color:var(--gold);" id="mes-points">0</div>
+      <div style="font-size:11px;color:var(--text-muted);">⭐ Points fidélité</div>
+    </div>
+    <div class="stat-card" style="padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--green);" id="points-fcfa">0 FCFA</div>
+      <div style="font-size:11px;color:var(--text-muted);">💰 Valeur en FCFA</div>
+    </div>
+  </div>
+
+  <!-- Info conversion -->
+  <div style="background:#fff8e1;border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:#7c5a00;">
+    💡 <strong>1 000 points = 2 800 FCFA</strong> de réduction sur votre prochaine cotisation.<br>
+    Gagnez <strong>500 points</strong> par filleul inscrit + <strong>200 points</strong> à son premier versement.
+  </div>
+
+  <!-- Liste des filleuls -->
+  <div style="font-size:13px;font-weight:600;margin-bottom:8px;">👥 Mes filleuls (<span id="nb-filleuls">0</span>)</div>
+  <div id="liste-filleuls"><div class="empty">Aucun filleul pour le moment</div></div>
+</div>
 
   <!-- Messages -->
   <div class="section-card">
@@ -623,6 +657,24 @@ async function marquerToutLu() {
     chargerNotifications();
   } catch(e) {}
 }
+  async function chargerParrainage() {
+  try {
+    const res = await fetch('/api/auth/parrainage', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    document.getElementById('mon-code-parrainage').textContent = data.codeParrainage || '–';
+    document.getElementById('mes-points').textContent = data.points;
+    document.getElementById('points-fcfa').textContent = nbFCFA(data.pointsEnFCFA) + ' FCFA';
+    document.getElementById('nb-filleuls').textContent = data.filleuls.length;
+    document.getElementById('liste-filleuls').innerHTML = data.filleuls.length ?
+      data.filleuls.map(f => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>👤 ${f.nom}</span><span style="color:var(--text-muted);font-size:11px;">${formatDate(f.date)}</span></div>`).join('') :
+      '<div class="empty">Aucun filleul pour le moment</div>';
+  } catch(e) { console.error('Erreur parrainage:', e); }
+}
+
+function copierCode() {
+  const code = document.getElementById('mon-code-parrainage').textContent;
+  navigator.clipboard.writeText(code).then(() => alert('✅ Code copié : ' + code));
+}
   async function chargerHistorique() {
   try {
     const res = await fetch('/api/cotisations/mon-historique', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -683,6 +735,7 @@ chargerCotisations();
 chargerMessages();
 chargerHistorique();
 chargerNotifications();
+chargerParrainage();
 remplirMoisClient();
 ajouterLignePanierClient();
 </script>
