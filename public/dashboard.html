@@ -712,30 +712,12 @@ async function chargerDashboard() {
         html += `<div style="height:16px;background:${color};border-radius:2px;" title="${val} versement(s)"></div>`;
       });
     });
-    html += '</div>';
+   html += '</div>';
     chaleurEl.innerHTML = html;
   }
   document.getElementById('notif-messages').textContent = nonLus;
   document.getElementById('notif-messages').style.display = nonLus > 0 ? 'inline' : 'none';
-
-  // Top clients
-  const sorted = [...cotisations].sort((a,b) => b.objectifPoulets - a.objectifPoulets).slice(0,5);
-  document.getElementById('top-clients-list').innerHTML = sorted.length ? sorted.map(c =>
-    '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">' +
-    '<div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">' + (c.client?.nom||'?')[0].toUpperCase() + '</div>' +
-    '<div style="flex:1"><div style="font-weight:600;font-size:13px;">' + (c.client?.nom||'') + ' ' + (c.client?.prenom||'') + '</div>' +
-    '<div class="progress-bar" style="width:120px;"><div class="progress-fill" style="width:' + Math.min(100,Math.round(c.montantCollecte/c.montantObjectif*100||0)) + '%"></div></div></div>' +
-    '<span style="font-size:12px;color:var(--text-muted);">' + c.objectifPoulets + ' 🐔</span></div>'
-  ).join('') : '<div class="empty"><div class="empty-icon">🐔</div>Aucune cotisation</div>';
-
-  // Alertes
-  const retard = cotisations.filter(c => c.statut === 'en_cours' && c.montantCollecte < c.montantObjectif * 0.5);
-  document.getElementById('alertes-list').innerHTML =
-    (nonLus > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">💬 <strong>' + nonLus + ' message(s)</strong> non lu(s)</div>' : '') +
-    (retard.length > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">⚠️ <strong>' + retard.length + ' cotisation(s)</strong> à moins de 50%</div>' : '') +
-    (completes.length > 0 ? '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">✅ <strong>' + completes.length + ' cotisation(s)</strong> prête(s) à livrer</div>' : '') +
-    '<div style="padding:8px 0;font-size:13px;">👥 <strong>' + clients.length + ' client(s)</strong> inscrits au total</div>';
-
+  
   // Charts
   const mois = statsMensuelles.map(s => s.label);
   const collectes = statsMensuelles.map(s => s.collecte);
