@@ -317,9 +317,12 @@ tr:last-child td{border-bottom:none;}
           <input type="text" id="new-prenom" placeholder="Prénom *">
         </div>
         <div class="form-row">
-          <input type="tel" id="new-tel" placeholder="Téléphone *">
-          <input type="password" id="new-mdp" placeholder="Mot de passe temporaire *">
-        </div>
+  <input type="tel" id="new-tel" placeholder="Téléphone *">
+  <input type="password" id="new-mdp" placeholder="Mot de passe temporaire *">
+</div>
+<div class="form-row">
+  <input type="text" id="new-code-parrain" placeholder="Code de parrainage (optionnel)">
+</div>
         <div class="form-actions">
           <button class="btn btn-green" onclick="ajouterClient()">✓ Enregistrer</button>
           <button class="btn btn-ghost" onclick="toggleForm('form-client')">Annuler</button>
@@ -781,8 +784,9 @@ async function ajouterClient() {
   const prenom = document.getElementById('new-prenom').value;
   const telephone = document.getElementById('new-tel').value;
   const motDePasse = document.getElementById('new-mdp').value;
+  const codeParrainSaisi = document.getElementById('new-code-parrain').value;
   if (!nom||!prenom||!telephone||!motDePasse) { alert('Remplissez tous les champs'); return; }
-  const res = await fetch('/api/auth/inscription', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({nom,prenom,telephone,motDePasse}) });
+  const res = await fetch('/api/auth/inscription', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({nom,prenom,telephone,motDePasse,codeParrainSaisi}) });
   const data = await res.json();
   if (res.ok) { alert('✅ Client ajouté !'); toggleForm('form-client'); chargerClients(); }
   else alert('Erreur : ' + data.message);
