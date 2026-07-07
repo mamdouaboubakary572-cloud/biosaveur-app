@@ -69,6 +69,21 @@ router.delete('/admins/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
- 
+
+ // Réinitialiser le mot de passe d'un client
+router.put('/clients/:id/reinitialiser-mdp', auth, async (req, res) => {
+  try {
+    const { nouveauMotDePasse } = req.body;
+    if (!nouveauMotDePasse || nouveauMotDePasse.length < 4) {
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 4 caractères' });
+    }
+    const hash = await bcrypt.hash(nouveauMotDePasse, 10);
+    const user = await User.findByIdAndUpdate(req.params.id, { motDePasse: hash }, { new: true });
+    if (!user) return res.status(404).json({ message: 'Client non trouvé' });
+    res.json({ message: 'Mot de passe réinitialisé avec succès' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
 module.exports = router;
  
