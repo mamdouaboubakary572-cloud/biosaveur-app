@@ -331,7 +331,7 @@ tr:last-child td{border-bottom:none;}
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Nom & Prénom</th><th>Téléphone</th><th>Inscription</th><th>QR Code</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>Nom & Prénom</th><th>Téléphone</th><th>Parrainé par</th><th>Inscription</th><th>QR Code</th><th>Actions</th></tr></thead>
           <tbody id="clients-table"></tbody>
         </table>
       </div>
@@ -770,10 +770,11 @@ function afficherClients(data) {
   const tbody = document.getElementById('clients-table');
   tbody.innerHTML = data.map((c, i) =>
     '<tr><td>' + (i+1) + '</td><td><strong>' + c.nom + '</strong> ' + c.prenom + '</td><td>' + c.telephone +
+    '</td><td>' + (c.parrainId ? '🤝 ' + c.parrainId.nom + ' ' + c.parrainId.prenom : '<span style="color:var(--text-light)">–</span>') +
     '</td><td>' + formatDate(c.dateCreation) + '</td><td>' +
     (c.qrCode ? '<button class="btn btn-blue btn-sm" onclick="voirQR(\'' + c.qrCode + '\')">📱 QR</button>' : '<span style="color:var(--text-light)">–</span>') +
     '</td><td><button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>'
-  ).join('') || '<tr><td colspan="6" class="empty">Aucun client inscrit</td></tr>';
+  ).join('') || '<tr><td colspan="7" class="empty">Aucun client inscrit</td></tr>';
 }
 function filtrerClients(q) {
   const f = allClients.filter(c => (c.nom+' '+c.prenom+' '+c.telephone).toLowerCase().includes(q.toLowerCase()));
