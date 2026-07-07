@@ -85,5 +85,6 @@ router.put('/clients/:id/reinitialiser-mdp', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
+
 module.exports = router;
  
