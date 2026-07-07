@@ -773,7 +773,7 @@ function afficherClients(data) {
     '</td><td>' + (c.parrainId ? '🤝 ' + c.parrainId.nom + ' ' + c.parrainId.prenom : '<span style="color:var(--text-light)">–</span>') +
     '</td><td>' + formatDate(c.dateCreation) + '</td><td>' +
     (c.qrCode ? '<button class="btn btn-blue btn-sm" onclick="voirQR(\'' + c.qrCode + '\')">📱 QR</button>' : '<span style="color:var(--text-light)">–</span>') +
-    '</td><td><button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>'
+   '</td><td><button class="btn btn-amber btn-sm" onclick="reinitialiserMdpClient(\'' + c._id + '\', \'' + c.nom + ' ' + c.prenom + '\')">🔑</button> <button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>'
   ).join('') || '<tr><td colspan="7" class="empty">Aucun client inscrit</td></tr>';
 }
 function filtrerClients(q) {
@@ -797,6 +797,20 @@ async function supprimerClient(id) {
   const res = await fetch('/api/admin/clients/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
   if (res.ok) { alert('✅ Client supprimé'); chargerClients(); }
   else alert('Erreur lors de la suppression');
+}
+  async function reinitialiserMdpClient(id, nomComplet) {
+  const nouveauMdp = prompt('Nouveau mot de passe temporaire pour ' + nomComplet + ' :');
+  if (!nouveauMdp) return;
+  if (nouveauMdp.length < 4) { alert('Le mot de passe doit contenir au moins 4 caractères'); return; }
+  if (!confirm('Réinitialiser le mot de passe de ' + nomComplet + ' avec "' + nouveauMdp + '" ?')) return;
+  const res = await fetch('/api/admin/clients/' + id + '/reinitialiser-mdp', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ nouveauMotDePasse: nouveauMdp })
+  });
+  const data = await res.json();
+  if (res.ok) alert('✅ Mot de passe réinitialisé ! Communiquez-le au client : ' + nouveauMdp);
+  else alert('Erreur : ' + data.message);
 }
 async function remplirSelectClients() {
   const res = await fetch('/api/admin/clients', { headers:{'Authorization':'Bearer '+token} });
