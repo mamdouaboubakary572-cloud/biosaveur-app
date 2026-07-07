@@ -9,7 +9,10 @@ const auth = require('../middleware/auth');
 // Liste tous les clients
 router.get('/clients', auth, async (req, res) => {
   try {
-    const clients = await User.find({ role: 'client' }).select('-motDePasse').sort({ dateCreation: -1 });
+    const clients = await User.find({ role: 'client' })
+      .select('-motDePasse')
+      .populate('parrainId', 'nom prenom')
+      .sort({ dateCreation: -1 });
     res.json(clients);
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
