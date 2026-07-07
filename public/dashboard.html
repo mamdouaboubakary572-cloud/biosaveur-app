@@ -1090,7 +1090,7 @@ async function chargerLivraisons() {
   const tbody = document.getElementById('livraisons-table');
   tbody.innerHTML = livraisons.length ? livraisons.map(c =>
     '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small>' + (c.client?.telephone||'') + '</small></td>' +
-    '<td>' + c.mois + '</td><td>' + c.objectifPoulets + ' 🐔</td>' +
+    '<td>' + c.mois + '</td><td>' + (c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join('<br>') : (c.objectifPoulets||0) + ' 🐔') + '</td>' +
 '<td>' + (c.jourLivraisonChoisi || 'Non défini') + '</td>' +
     '<td>' + (c.dateLivraisonEffective ? formatDate(c.dateLivraisonEffective) : '–') + '</td>' +
     '<td><span class="badge" style="background:' + (c.statut==='livre'?'var(--blue-light)':'var(--green-light)') + ';color:' + couleur(c) + '">' + c.statut.replace('_',' ') + '</span></td>' +
