@@ -295,9 +295,27 @@ tr:last-child td{border-bottom:none;}
         </div>
       </div>
     <div class="chart-card" style="margin-top:16px;">
-        <div class="chart-title">🌡️ Carte de chaleur des versements (jour/heure)</div>
-        <div id="chaleur-versements"><div class="empty">Chargement...</div></div>
+    <div class="chart-title">🌡️ Carte de chaleur des versements (jour/heure)</div>
+    <div id="chaleur-versements"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <div class="chart-card" style="margin-top:16px;">
+    <div class="chart-title">⭐ Fiabilité des clients</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div class="stat-card" style="padding:12px;text-align:center;">
+        <div class="s-value" id="fiab-nb-fiables" style="color:var(--green);font-size:24px;">0</div>
+        <div class="s-label">⭐ Fiables</div>
       </div>
+      <div class="stat-card" style="padding:12px;text-align:center;">
+        <div class="s-value" id="fiab-nb-surveiller" style="color:var(--amber);font-size:24px;">0</div>
+        <div class="s-label">⚠️ À surveiller</div>
+      </div>
+      <div class="stat-card" style="padding:12px;text-align:center;">
+        <div class="s-value" id="fiab-nb-nouveaux" style="color:var(--text-muted);font-size:24px;">0</div>
+        <div class="s-label">🆕 Nouveaux</div>
+      </div>
+    </div>
+  </div>
     </div>
 
     <!-- ===== CLIENTS ===== -->
@@ -724,6 +742,20 @@ async function chargerDashboard() {
   }
   document.getElementById('notif-messages').textContent = nonLus;
   document.getElementById('notif-messages').style.display = nonLus > 0 ? 'inline' : 'none';
+
+  // Fiabilité clients
+  let nbFiables = 0, nbSurveiller = 0, nbNouveaux = 0;
+  clients.forEach(cl => {
+    const cots = cotisations.filter(c => c.client?._id === cl._id);
+    if (!cots.length) { nbNouveaux++; return; }
+    const enRetard = cots.some(c => c.statut === 'en_cours' && (c.montantCollecte||0) < (c.montantObjectif||0) * 0.5);
+    if (enRetard) nbSurveiller++; else nbFiables++;
+  });
+  document.getElementById('fiab-nb-fiables').textContent = nbFiables;
+  document.getElementById('fiab-nb-surveiller').textContent = nbSurveiller;
+  document.getElementById('fiab-nb-nouveaux').textContent = nbNouveaux;
+
+  // Charts
   
   // Charts
   const mois = statsMensuelles.map(s => s.label);
