@@ -349,7 +349,7 @@ tr:last-child td{border-bottom:none;}
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Nom & Prénom</th><th>Téléphone</th><th>Parrainé par</th><th>Inscription</th><th>QR Code</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>Nom & Prénom</th><th>Téléphone</th><th>Parrainé par</th><th>Fiabilité</th><th>Inscription</th><th>QR Code</th><th>Actions</th></tr></thead>
           <tbody id="clients-table"></tbody>
         </table>
       </div>
@@ -798,25 +798,36 @@ async function chargerDashboard() {
 
 // ─── CLIENTS ───────────────────────────────────────────
 let allClients = [];
+let allCotisationsPourFiabilite = [];
 async function chargerClients() {
-  const res = await fetch('/api/admin/clients', { headers:{'Authorization':'Bearer '+token} });
-  allClients = await res.json();
+  const [resClients, resCot] = await Promise.all([
+    fetch('/api/admin/clients', { headers:{'Authorization':'Bearer '+token} }),
+    fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} })
+  ]);
+  allClients = await resClients.json();
+  allCotisationsPourFiabilite = await resCot.json();
   document.getElementById('total-clients').textContent = allClients.length;
   afficherClients(allClients);
 }
+
+function calculerFiabilite(clientId) {
+  const cots = allCotisationsPourFiabilite.filter(c => c.client?._id === clientId);
+  if (!cots.length) return { label: 'Nouveau', classe: 'badge-gray', icone: '🆕' };
+  const enRetard = cots.some(c => c.statut === 'en_cours' && (c.montantCollecte||0) < (c.montantObjectif||0) * 0.5);
+  if (enRetard) return { label: 'À surveiller', classe: 'badge-amber', icone: '⚠️' };
+  return { label: 'Fiable', classe: 'badge-green', icone: '⭐' };
+}
 function afficherClients(data) {
   const tbody = document.getElementById('clients-table');
-  tbody.innerHTML = data.map((c, i) =>
-    '<tr><td>' + (i+1) + '</td><td><strong>' + c.nom + '</strong> ' + c.prenom + '</td><td>' + c.telephone +
+  tbody.innerHTML = data.map((c, i) => {
+    const fiab = calculerFiabilite(c._id);
+    return '<tr><td>' + (i+1) + '</td><td><strong>' + c.nom + '</strong> ' + c.prenom + '</td><td>' + c.telephone +
     '</td><td>' + (c.parrainId ? '🤝 ' + c.parrainId.nom + ' ' + c.parrainId.prenom : '<span style="color:var(--text-light)">–</span>') +
+    '</td><td><span class="badge ' + fiab.classe + '">' + fiab.icone + ' ' + fiab.label + '</span>' +
     '</td><td>' + formatDate(c.dateCreation) + '</td><td>' +
     (c.qrCode ? '<button class="btn btn-blue btn-sm" onclick="voirQR(\'' + c.qrCode + '\')">📱 QR</button>' : '<span style="color:var(--text-light)">–</span>') +
-   '</td><td><button class="btn btn-green btn-sm" onclick="ouvrirWhatsApp(\'' + c.telephone + '\', \'Bonjour ' + c.nom + ', ici BIOSAVEUR 🐔\')">💬 WA</button> <button class="btn btn-amber btn-sm" onclick="reinitialiserMdpClient(\'' + c._id + '\', \'' + c.nom + ' ' + c.prenom + '\')">🔑</button> <button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>'
-  ).join('') || '<tr><td colspan="7" class="empty">Aucun client inscrit</td></tr>';
-}
-function filtrerClients(q) {
-  const f = allClients.filter(c => (c.nom+' '+c.prenom+' '+c.telephone).toLowerCase().includes(q.toLowerCase()));
-  afficherClients(f);
+   '</td><td><button class="btn btn-green btn-sm" onclick="ouvrirWhatsApp(\'' + c.telephone + '\', \'Bonjour ' + c.nom + ', ici BIOSAVEUR 🐔\')">💬 WA</button> <button class="btn btn-amber btn-sm" onclick="reinitialiserMdpClient(\'' + c._id + '\', \'' + c.nom + ' ' + c.prenom + '\')">🔑</button> <button class="btn btn-red btn-sm" onclick="supprimerClient(\'' + c._id + '\')">🗑</button></td></tr>';
+  }).join('') || '<tr><td colspan="8" class="empty">Aucun client inscrit</td></tr>';
 }
 async function ajouterClient() {
   const nom = document.getElementById('new-nom').value;
