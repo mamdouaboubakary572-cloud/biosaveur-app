@@ -5,6 +5,13 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { envoyerSMS } = require('../services/sms');
 const Notification = require('../models/Notification');
+
+const MAX_LIVRAISONS_PAR_JOUR = 10;
+
+function formatDateFr(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR', { timeZone: 'UTC' });
+}
  
 // Créer une cotisation
 router.post('/', auth, async (req, res) => {
@@ -457,6 +464,24 @@ router.get('/stats-avancees', auth, async (req, res) => {
     });
 
     res.json({ top5, tauxCompletion, revenuPrevisionnel, chaleur });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+// Vérifier la disponibilité d'un créneau de livraison
+router.get('/creneaux', auth, async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ message: 'Date requise' });
+    const dateFr = formatDateFr(date);
+    const cotisations = await Cotisation.find({
+      statut: { $in: ['en_cours', 'complete'] },
+      jourLivraisonChoisi: { $regex: '^' + dateFr }
+    });
+    const total = cotisations.length;
+    const restant = Math.max(0, MAX_LIVRAISONS_PAR_JOUR - total);
+    res.json({ date: dateFr, total, max: MAX_LIVRAISONS_PAR_JOUR, restant, disponible: restant > 0 });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
