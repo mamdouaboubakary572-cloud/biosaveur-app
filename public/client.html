@@ -96,6 +96,9 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 <button onclick="ouvrirModalProfil()" class="btn-qr" style="background:var(--green-light);color:var(--green);">✏️ Modifier</button>
   </div>
 
+  <!-- Rappel versement -->
+  <div id="rappel-versement" style="display:none;background:linear-gradient(135deg,#fff3e0,#ffe0b2);border-radius:12px;padding:14px 16px;margin-bottom:16px;border-left:4px solid var(--gold);"></div>
+
   <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card"><div class="s-value" id="stat-poulets">0</div><div class="s-label">🐔 Poulets visés</div></div>
@@ -422,6 +425,17 @@ async function chargerCotisations() {
     document.getElementById('stat-poulets').textContent = totalPoulets;
     document.getElementById('stat-collecte').textContent = nbFCFA(totalCollecte);
     document.getElementById('stat-progression').textContent = pct + '%';
+
+    // Rappel de versement
+    const cotEnCours = mesCotisations.filter(c => c.statut === 'en_cours');
+    const rappelDiv = document.getElementById('rappel-versement');
+    if (cotEnCours.length) {
+      const resteTotal = cotEnCours.reduce((s,c) => s + Math.max(0, (c.montantObjectif||0)-(c.montantCollecte||0)), 0);
+      rappelDiv.style.display = 'block';
+      rappelDiv.innerHTML = '⏰ Il vous reste <strong>' + nbFCFA(resteTotal) + ' FCFA</strong> à verser pour ' + (cotEnCours.length > 1 ? 'vos cotisations en cours' : 'votre cotisation de ' + cotEnCours[0].mois) + '.';
+    } else {
+      rappelDiv.style.display = 'none';
+    }
 
     const div = document.getElementById('cotisations-list');
     if (!mesCotisations.length) { div.innerHTML = '<div class="empty">Aucune cotisation en cours</div>'; }
