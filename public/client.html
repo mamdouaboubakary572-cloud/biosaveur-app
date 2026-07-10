@@ -38,6 +38,15 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 .progress-bar{background:#e0e8e2;border-radius:99px;height:8px;overflow:hidden;margin:8px 0;}
 .progress-fill{height:100%;border-radius:99px;background:var(--green);}
 .cot-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);}
+.timeline{display:flex;align-items:center;margin:12px 0;}
+.timeline-step{flex:1;text-align:center;position:relative;}
+.timeline-step .dot{width:20px;height:20px;border-radius:50%;background:var(--border);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;margin:0 auto 4px;font-weight:700;position:relative;z-index:2;}
+.timeline-step.done .dot{background:var(--green);}
+.timeline-step .label{font-size:9px;color:var(--text-light);}
+.timeline-step.done .label{color:var(--green);font-weight:600;}
+.timeline-line{position:absolute;top:10px;left:-50%;width:100%;height:2px;background:var(--border);z-index:1;}
+.timeline-step.done .timeline-line{background:var(--green);}
+.timeline-step:first-child .timeline-line{display:none;}
 .versement-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
 .versement-item:last-child{border-bottom:none;}
 .v-montant{font-weight:700;color:var(--green);font-size:14px;}
@@ -423,8 +432,21 @@ async function chargerCotisations() {
         const sl = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète ✅':'Livrée 🚚';
         const reste = Math.max(0, (c.montantObjectif||0) - (c.montantCollecte||0));
         const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
+       const etapes = [
+          { key: 'creee', label: 'Créée', icone: '✓' },
+          { key: 'en_cours', label: 'En cours', icone: '💰' },
+          { key: 'complete', label: 'Complète', icone: '✅' },
+          { key: 'livre', label: 'Livrée', icone: '🚚' }
+        ];
+        const ordreStatut = { en_cours: 1, complete: 2, livre: 3 };
+        const etapeActuelle = ordreStatut[c.statut] || 1;
+        const timelineHTML = '<div class="timeline">' + etapes.map((e, idx) => {
+          const done = idx <= etapeActuelle;
+          return '<div class="timeline-step' + (done ? ' done' : '') + '"><div class="timeline-line"></div><div class="dot">' + (done ? '✓' : idx+1) + '</div><div class="label">' + e.label + '</div></div>';
+        }).join('') + '</div>';
         return `<div class="cotisation-item">
           <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small></div><span class="badge ${bc}">${sl}</span></div>
+          ${timelineHTML}
           <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
           <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
           ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
