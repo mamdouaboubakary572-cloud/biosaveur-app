@@ -543,6 +543,15 @@ async function confirmerLivraisonCarte(cotisationId) {
   const date = document.getElementById('ldate-' + cotisationId).value;
   const heure = document.getElementById('lheure-' + cotisationId).value;
   if (!date) { alert('Choisissez une date'); return; }
+
+  // Vérifier la disponibilité du créneau
+  const resCreneau = await fetch('/api/cotisations/creneaux?date=' + date, { headers: { 'Authorization': 'Bearer ' + token } });
+  const creneau = await resCreneau.json();
+  if (!creneau.disponible) {
+    alert('❌ Cette date est complète (' + creneau.total + '/' + creneau.max + ' livraisons déjà prévues). Merci de choisir un autre jour.');
+    return;
+  }
+
   const dateObj = new Date(date);
   const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
   const res = await fetch('/api/cotisations/' + cotisationId + '/jour-livraison', {
@@ -552,7 +561,7 @@ async function confirmerLivraisonCarte(cotisationId) {
   });
   const data = await res.json();
   if (res.ok) {
-    alert('✅ Date de livraison enregistrée : ' + jourLivraisonChoisi);
+    alert('✅ Date de livraison enregistrée : ' + jourLivraisonChoisi + ' (' + creneau.restant + ' place(s) restante(s) ce jour-là)');
     chargerCotisations();
   } else {
     alert('Erreur : ' + data.message);
