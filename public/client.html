@@ -6,8 +6,11 @@
 <title>BIOSAVEUR – Mon Espace</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0;box-shadow:0 -2px 8px rgba(0,0,0,0.08);z-index:200;}
+.bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--text-muted);cursor:pointer;padding:4px 8px;}
+.bottom-nav button .nav-icon{font-size:20px;}
 :root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;--red:#c0392b;--red-light:#fdecea;--blue:#1565c0;--blue-light:#e3eefa;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding-bottom:64px;}
 header{background:var(--green);color:white;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .logo{font-size:16px;font-weight:700;}
 .logo span{color:#a8d5b5;font-weight:400;font-size:12px;margin-left:6px;}
@@ -70,7 +73,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 <div class="main">
 
   <!-- Profil -->
-  <div class="profile-card">
+  <div class="profile-card" id="nav-profil">
     <div class="avatar" id="avatar">?</div>
     <div class="profile-info">
       <h2 id="profile-nom">Chargement...</h2>
@@ -92,7 +95,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   </div>
 
   <!-- Cotisations -->
-  <div class="section-card">
+ <div class="section-card" id="nav-cotisations">
     <div class="section-title">🐔 Mes Cotisations</div>
     <div id="cotisations-list"><div class="empty">Chargement...</div></div>
   </div>
@@ -153,14 +156,17 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 </div>
   
   <!-- Parrainage -->
-<div class="section-card">
+<div class="section-card" id="nav-parrainage">
   <div class="section-title">🤝 Mon Parrainage</div>
   
   <!-- Code de parrainage -->
   <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Mon code de parrainage</div>
     <div id="mon-code-parrainage" style="font-size:22px;font-weight:700;color:var(--green);letter-spacing:2px;">–</div>
-    <button onclick="copierCode()" style="margin-top:8px;background:var(--green);color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📋 Copier</button>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+  <button onclick="copierCode()" style="background:var(--green);color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📋 Copier</button>
+  <button onclick="partagerParrainage()" style="background:#25D366;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📤 Partager</button>
+</div>
   </div>
 
   <!-- Points -->
@@ -187,7 +193,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 </div>
 
   <!-- Messages -->
-  <div class="section-card">
+ <div class="section-card" id="nav-messages">
     <div class="section-title">💬 Contacter BIOSAVEUR</div>
     <div>
       <textarea id="msg-contenu" placeholder="Écrivez votre message ici..." class="form-input" style="min-height:80px;resize:vertical;"></textarea>
@@ -197,6 +203,15 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   </div>
 
 </div>
+
+<div class="bottom-nav">
+  <button onclick="allerA('nav-profil')"><span class="nav-icon">👤</span>Profil</button>
+  <button onclick="allerA('nav-cotisations')"><span class="nav-icon">🐔</span>Cotisations</button>
+  <button onclick="allerA('nav-parrainage')"><span class="nav-icon">🤝</span>Parrainage</button>
+  <button onclick="allerA('nav-messages')"><span class="nav-icon">💬</span>Messages</button>
+</div>
+
+<!-- QR Modal -->
 
 <!-- QR Modal -->
 <div id="modal-qr">
@@ -275,6 +290,7 @@ if (role && role !== 'client') window.location.href = '/dashboard.html';
 
 function deconnexion() { localStorage.clear(); window.location.href = '/'; }
 function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
+function allerA(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); } function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
 
 let monQRCode = '';
@@ -674,6 +690,11 @@ async function marquerToutLu() {
 function copierCode() {
   const code = document.getElementById('mon-code-parrainage').textContent;
   navigator.clipboard.writeText(code).then(() => alert('✅ Code copié : ' + code));
+}
+  function partagerParrainage() {
+  const code = document.getElementById('mon-code-parrainage').textContent;
+  const message = 'Salut ! Rejoins BIOSAVEUR 🐔 avec mon code de parrainage ' + code + ' et reçois des poulets frais livrés à domicile. Inscris-toi vite !';
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
 }
   async function chargerHistorique() {
   try {
