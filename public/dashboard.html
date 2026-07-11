@@ -6,6 +6,8 @@
 <title>BIOSAVEUR – Tableau de Bord Admin</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -197,7 +199,8 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div class="nav-section">
       <div class="nav-label">Organisation</div>
-      <button class="nav-btn" onclick="afficherTab('calendrier')"><span class="icon">📅</span> Calendrier</button>
+     <button class="nav-btn" onclick="afficherTab('calendrier')"><span class="icon">📅</span> Calendrier</button>
+<button class="nav-btn" onclick="afficherTab('carte')"><span class="icon">🗺️</span> Carte des zones</button>
       <button class="nav-btn" onclick="afficherTab('admins')"><span class="icon">🔐</span> Administrateurs</button>
     </div>
   </nav>
@@ -588,6 +591,20 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div id="cal-events" style="margin-top:16px;"></div>
     </div>
+    
+    <!-- ===== CARTE DES ZONES ===== -->
+    <div class="section" id="section-carte">
+      <div class="section-header">
+        <div class="section-title">🗺️ Carte des Zones de Livraison</div>
+      </div>
+      <div class="chart-card">
+        <div id="carte-map" style="height:500px;border-radius:10px;"></div>
+      </div>
+      <div class="chart-card" style="margin-top:14px;">
+        <div class="chart-title">📊 Répartition par commune</div>
+        <div id="carte-stats"></div>
+      </div>
+    </div>
 
     <!-- ===== ADMINS ===== -->
     <div class="section" id="section-admins">
@@ -677,7 +694,8 @@ function afficherTab(tab) {
   if (tab === 'calendrier') initCalendrier();
   if (tab === 'dashboard') chargerDashboard();
   if (tab === 'admins') chargerAdmins();
-  if (tab === 'paiements') chargerPaiements();
+ if (tab === 'paiements') chargerPaiements();
+  if (tab === 'carte') chargerCarte();
   if (tab === 'historique') chargerHistorique();
 }
 
@@ -1230,6 +1248,69 @@ async function supprimerAdmin(id) {
   if (!confirm('Supprimer cet administrateur ?')) return;
   await fetch('/api/admin/admins/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
   chargerAdmins();
+}
+  
+  // ─── CARTE DES ZONES ───────────────────────────────────
+const COMMUNES_ABIDJAN = {
+  'abobo': [5.4331, -4.0153], 'adjamé': [5.3667, -4.0333], 'adjame': [5.3667, -4.0333],
+  'attécoubé': [5.3333, -4.0500], 'attecoube': [5.3333, -4.0500],
+  'cocody': [5.3600, -3.9900], 'koumassi': [5.2989, -3.9553],
+  'marcory': [5.3000, -3.9833], 'plateau': [5.3200, -4.0200],
+  'port-bouët': [5.2500, -3.9333], 'port-bouet': [5.2500, -3.9333],
+  'treichville': [5.2953, -4.0092], 'yopougon': [5.3333, -4.0833],
+  'bingerville': [5.3556, -3.8917], 'anyama': [5.4939, -4.0511],
+  'songon': [5.3167, -4.2667]
+};
+
+let carteLeaflet = null;
+
+function trouverCoordonnees(localisation) {
+  if (!localisation) return null;
+  const loc = localisation.toLowerCase();
+  for (const commune in COMMUNES_ABIDJAN) {
+    if (loc.includes(commune)) return COMMUNES_ABIDJAN[commune];
+  }
+  return null;
+}
+
+async function chargerCarte() {
+  const res = await fetch('/api/admin/clients', { headers: { 'Authorization': 'Bearer ' + token } });
+  const clients = await res.json();
+
+  if (!carteLeaflet) {
+    carteLeaflet = L.map('carte-map').setView([5.3400, -4.0200], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(carteLeaflet);
+  }
+
+  // Nettoyer les anciens marqueurs
+  carteLeaflet.eachLayer(layer => { if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer); });
+
+  const compteurCommunes = {};
+  let sansLocalisation = 0;
+
+  clients.forEach(c => {
+    const coords = trouverCoordonnees(c.localisation);
+    if (coords) {
+      const jitterLat = (Math.random() - 0.5) * 0.01;
+      const jitterLng = (Math.random() - 0.5) * 0.01;
+      L.marker([coords[0] + jitterLat, coords[1] + jitterLng])
+        .addTo(carteLeaflet)
+        .bindPopup('<strong>' + c.nom + ' ' + c.prenom + '</strong><br>' + (c.localisation||'') + '<br>' + c.telephone);
+      const communeKey = c.localisation.toLowerCase().trim();
+      compteurCommunes[communeKey] = (compteurCommunes[communeKey] || 0) + 1;
+    } else {
+      sansLocalisation++;
+    }
+  });
+
+  const statsDiv = document.getElementById('carte-stats');
+  const entries = Object.entries(compteurCommunes).sort((a,b) => b[1]-a[1]);
+  statsDiv.innerHTML = (entries.length ? entries.map(([nom, n]) =>
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><span>📍 ' + nom.charAt(0).toUpperCase()+nom.slice(1) + '</span><strong>' + n + ' client(s)</strong></div>'
+  ).join('') : '<div class="empty">Aucune localisation renseignée</div>') +
+  (sansLocalisation > 0 ? '<div style="padding:8px 0;color:var(--text-light);font-size:12px;">⚠️ ' + sansLocalisation + ' client(s) sans localisation renseignée</div>' : '');
 }
 
 // ─── CALENDRIER ────────────────────────────────────────
