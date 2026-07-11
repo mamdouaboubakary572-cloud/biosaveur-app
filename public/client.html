@@ -786,11 +786,11 @@ async function marquerToutLu() {
   } catch(e) { console.error('Erreur parrainage:', e); }
 }
   
-  function simulerPoints() {
+ function simulerPoints() {
   const nb = parseInt(document.getElementById('sim-filleuls').value);
   document.getElementById('sim-filleuls-val').textContent = nb;
   const points = nb * 700; // 500 (inscription) + 200 (1er versement)
-  const fcfa = Math.floor(points / 1000) * 2800;
+  const fcfa = Math.floor((points / 1000) * 2800 / 4);
   document.getElementById('sim-points').textContent = nbFCFA(points) + ' pts';
   document.getElementById('sim-fcfa').textContent = '≈ ' + nbFCFA(fcfa) + ' FCFA de réduction';
 }
