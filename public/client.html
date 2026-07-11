@@ -479,7 +479,15 @@ async function chargerCotisations() {
           <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
           <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
           ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
-         ${c.statut!=='livre'?`
+          ${c.statut!=='livre'?`
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">
+            <span style="color:var(--text-muted);">🔄 Renouvellement automatique le mois prochain</span>
+            <label style="position:relative;display:inline-block;width:36px;height:20px;">
+              <input type="checkbox" ${c.renouvellementAuto!==false?'checked':''} onchange="toggleRenouvellement('${c._id}')" style="opacity:0;width:0;height:0;">
+              <span onclick="document.querySelector('#toggle-${c._id} input').click()" id="toggle-${c._id}" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${c.renouvellementAuto!==false?'var(--green)':'var(--border)'};border-radius:20px;transition:.3s;"></span>
+            </label>
+          </div>
+          `:''}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
             <button class="btn-green" style="padding:9px;font-size:12px;" onclick="toggleCarte('${c._id}','verser')">💰 Verser</button>
             <button class="btn-green" style="padding:9px;font-size:12px;background:var(--blue);" onclick="toggleCarte('${c._id}','livraison')">🚚 Livraison</button>
@@ -557,6 +565,17 @@ async function envoyerAvis(cotisationId) {
     chargerCotisations();
   } else {
     alert('Erreur : ' + data.message);
+  }
+}
+  
+  async function toggleRenouvellement(cotisationId) {
+  const res = await fetch('/api/cotisations/' + cotisationId + '/renouvellement-auto', {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('toggle-' + cotisationId).style.background = data.renouvellementAuto ? 'var(--green)' : 'var(--border)';
   }
 }
 
