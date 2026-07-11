@@ -487,4 +487,22 @@ router.get('/creneaux', auth, async (req, res) => {
   }
 });
 
+// Le client note sa livraison
+router.put('/:id/noter', auth, async (req, res) => {
+  try {
+    const { note, commentaireAvis } = req.body;
+    if (!note || note < 1 || note > 5) return res.status(400).json({ message: 'Note invalide (1 à 5)' });
+    const cotisation = await Cotisation.findById(req.params.id);
+    if (!cotisation) return res.status(404).json({ message: 'Cotisation non trouvée' });
+    if (cotisation.client.toString() !== req.user.id) return res.status(403).json({ message: 'Accès refusé' });
+    if (cotisation.statut !== 'livre') return res.status(400).json({ message: 'Cette cotisation n\'est pas encore livrée' });
+    cotisation.note = note;
+    cotisation.commentaireAvis = commentaireAvis || '';
+    await cotisation.save();
+    res.json({ message: 'Merci pour votre avis !', cotisation });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
