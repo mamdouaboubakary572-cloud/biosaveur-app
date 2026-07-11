@@ -193,10 +193,25 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     </div>
   </div>
 
-  <!-- Info conversion -->
+ <!-- Info conversion -->
   <div style="background:#fff8e1;border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:#7c5a00;">
     💡 <strong>1 000 points = 2 800 FCFA</strong> de réduction sur votre prochaine cotisation.<br>
     Gagnez <strong>500 points</strong> par filleul inscrit + <strong>200 points</strong> à son premier versement.
+  </div>
+
+  <!-- Simulateur -->
+  <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">🎯 Simulez vos gains</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;">Nombre d'amis à parrainer :</span>
+      <input type="range" id="sim-filleuls" min="0" max="20" value="3" oninput="simulerPoints()" style="flex:1;">
+      <span id="sim-filleuls-val" style="font-weight:700;color:var(--green);min-width:20px;">3</span>
+    </div>
+    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:11px;color:var(--text-muted);">Points estimés (si tous versent)</div>
+      <div id="sim-points" style="font-size:24px;font-weight:700;color:var(--gold);">3 500 pts</div>
+      <div id="sim-fcfa" style="font-size:13px;color:var(--green);font-weight:600;">≈ 9 800 FCFA de réduction</div>
+    </div>
   </div>
 
   <!-- Liste des filleuls -->
@@ -770,6 +785,15 @@ async function marquerToutLu() {
       '<div class="empty">Aucun filleul pour le moment</div>';
   } catch(e) { console.error('Erreur parrainage:', e); }
 }
+  
+  function simulerPoints() {
+  const nb = parseInt(document.getElementById('sim-filleuls').value);
+  document.getElementById('sim-filleuls-val').textContent = nb;
+  const points = nb * 700; // 500 (inscription) + 200 (1er versement)
+  const fcfa = Math.floor(points / 1000) * 2800;
+  document.getElementById('sim-points').textContent = nbFCFA(points) + ' pts';
+  document.getElementById('sim-fcfa').textContent = '≈ ' + nbFCFA(fcfa) + ' FCFA de réduction';
+}
 
 function copierCode() {
   const code = document.getElementById('mon-code-parrainage').textContent;
@@ -843,6 +867,7 @@ chargerNotifications();
 chargerParrainage();
 remplirMoisClient();
 ajouterLignePanierClient();
+simulerPoints();
 </script>
 </body>
 </html>
