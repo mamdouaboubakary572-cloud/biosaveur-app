@@ -25,7 +25,8 @@ const cotisationSchema = new mongoose.Schema({
   dateLivraisonEffective: { type: Date },
  encaisse: { type: Boolean, default: false },
   cotisationPrecedenteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Cotisation' },
-  note: { type: Number, min: 1, max: 5 },
-  commentaireAvis: { type: String, default: '' }
+ note: { type: Number, min: 1, max: 5 },
+  commentaireAvis: { type: String, default: '' },
+  renouvellementAuto: { type: Boolean, default: true }
 }, { timestamps: true });
 module.exports = mongoose.model('Cotisation', cotisationSchema);
