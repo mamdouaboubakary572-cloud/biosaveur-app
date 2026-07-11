@@ -130,6 +130,13 @@ router.put('/:id/livrer', auth, async (req, res) => {
     cotisationActuelle.dateLivraisonEffective = new Date();
     await cotisationActuelle.save();
 
+    if (cotisationActuelle.renouvellementAuto === false) {
+      return res.json({
+        message: 'Livraison confirmée. Renouvellement automatique désactivé par le client.',
+        cotisationLivree: cotisationActuelle
+      });
+    }
+
     const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
     let moisSuivant;
     try {
@@ -181,6 +188,22 @@ router.put('/:id/livrer', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
+
+// Basculer le renouvellement automatique d'une cotisation
+router.patch('/:id/renouvellement-auto', auth, async (req, res) => {
+  try {
+    const cotisation = await Cotisation.findById(req.params.id);
+    if (!cotisation) return res.status(404).json({ message: 'Cotisation non trouvée' });
+    cotisation.renouvellementAuto = !cotisation.renouvellementAuto;
+    await cotisation.save();
+    res.json({ message: 'Renouvellement automatique mis à jour', renouvellementAuto: cotisation.renouvellementAuto });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+// Mettre à jour le jour de livraison
+router.put('/:id/jour-livraison', auth, async (req, res) => {
  
 // Mettre à jour le jour de livraison
 router.put('/:id/jour-livraison', auth, async (req, res) => {
