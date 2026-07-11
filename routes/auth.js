@@ -129,7 +129,7 @@ router.get('/parrainage', auth, async (req, res) => {
     res.json({
       codeParrainage: user.codeParrainage,
       points: user.points || 0,
-      pointsEnFCFA: Math.floor((user.points || 0) / 1000) * 2800,
+      pointsEnFCFA: Math.floor((user.points || 0) / 1000) * 700,
       filleuls: filleuls.map(f => ({ nom: f.nom + ' ' + f.prenom, date: f.dateCreation }))
     });
   } catch (err) {
