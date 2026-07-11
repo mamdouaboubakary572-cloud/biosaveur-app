@@ -464,7 +464,7 @@ async function chargerCotisations() {
           <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
           <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
           ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
-          ${c.statut!=='livre'?`
+         ${c.statut!=='livre'?`
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
             <button class="btn-green" style="padding:9px;font-size:12px;" onclick="toggleCarte('${c._id}','verser')">💰 Verser</button>
             <button class="btn-green" style="padding:9px;font-size:12px;background:var(--blue);" onclick="toggleCarte('${c._id}','livraison')">🚚 Livraison</button>
@@ -485,7 +485,19 @@ async function chargerCotisations() {
             <input type="time" id="lheure-${c._id}" class="form-input">
             <button class="btn-green" onclick="confirmerLivraisonCarte('${c._id}')">📅 Confirmer la livraison</button>
           </div>
-          `:''}
+          `: (c.note ? `
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;text-align:center;">
+            <div style="font-size:16px;">${'⭐'.repeat(c.note)}${'☆'.repeat(5-c.note)}</div>
+            ${c.commentaireAvis ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">"${c.commentaireAvis}"</div>` : ''}
+          </div>
+          ` : `
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;text-align:center;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Comment était votre livraison ?</div>
+            <div id="stars-${c._id}" style="font-size:24px;cursor:pointer;">${[1,2,3,4,5].map(n => `<span onclick="choisirNote('${c._id}',${n})" id="star-${c._id}-${n}">☆</span>`).join('')}</div>
+            <input type="text" id="avis-${c._id}" class="form-input" placeholder="Un petit commentaire (optionnel)" style="margin-top:8px;">
+            <button class="btn-green" style="padding:9px;font-size:12px;" onclick="envoyerAvis('${c._id}')">✓ Envoyer mon avis</button>
+          </div>
+          `)}
         </div>`;
       }).join('');
     }
@@ -506,6 +518,33 @@ async function chargerCotisations() {
     document.getElementById('cotisations-list').innerHTML = '<div class="empty">Erreur de chargement</div>';
   }
 }
+  let notesEnCours = {};
+
+function choisirNote(cotisationId, note) {
+  notesEnCours[cotisationId] = note;
+  for (let n = 1; n <= 5; n++) {
+    document.getElementById('star-' + cotisationId + '-' + n).textContent = n <= note ? '⭐' : '☆';
+  }
+}
+
+async function envoyerAvis(cotisationId) {
+  const note = notesEnCours[cotisationId];
+  if (!note) { alert('Choisissez une note en cliquant sur les étoiles'); return; }
+  const commentaireAvis = document.getElementById('avis-' + cotisationId).value;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/noter', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ note, commentaireAvis })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Merci pour votre avis !');
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+
 function toggleCarte(id, type) {
   const panelVerser = document.getElementById('panel-verser-' + id);
   const panelLivraison = document.getElementById('panel-livraison-' + id);
