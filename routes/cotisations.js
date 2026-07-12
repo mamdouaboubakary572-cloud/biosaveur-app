@@ -201,9 +201,6 @@ router.patch('/:id/renouvellement-auto', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
 });
-
-// Mettre à jour le jour de livraison
-router.put('/:id/jour-livraison', auth, async (req, res) => {
  
 // Mettre à jour le jour de livraison
 router.put('/:id/jour-livraison', auth, async (req, res) => {
