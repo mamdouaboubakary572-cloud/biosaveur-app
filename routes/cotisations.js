@@ -7,6 +7,36 @@ const { envoyerSMS } = require('../services/sms');
 const Notification = require('../models/Notification');
 
 const MAX_LIVRAISONS_PAR_JOUR = 10;
+let derniereVerifRappels = null;
+
+async function verifierRappelsLivraison() {
+  const aujourdhui = new Date().toDateString();
+  if (derniereVerifRappels === aujourdhui) return; // déjà fait aujourd'hui
+  derniereVerifRappels = aujourdhui;
+
+  const demain = new Date();
+  demain.setDate(demain.getDate() + 1);
+  const demainStr = formatDateFr(demain.toISOString());
+
+  try {
+    const cotisations = await Cotisation.find({
+      statut: { $in: ['en_cours', 'complete'] },
+      jourLivraisonChoisi: { $regex: '^' + demainStr }
+    });
+    for (const c of cotisations) {
+      await Notification.create({
+        userId: c.client,
+        message: `📅 Rappel : votre livraison BIOSAVEUR est prévue demain (${c.jourLivraisonChoisi}).`,
+        type: 'rappel_livraison'
+      });
+    }
+    console.log(demainStr + ' : ' + cotisations.length + ' rappel(s) de livraison créé(s)');
+  } catch (err) {
+    console.error('Erreur vérification rappels:', err.message);
+  }
+}
+
+setInterval(verifierRappelsLivraison, 60 * 60 * 1000); // vérifie chaque heure
 
 function formatDateFr(dateStr) {
   const d = new Date(dateStr);
@@ -525,4 +555,21 @@ router.put('/:id/noter', auth, async (req, res) => {
   }
 });
 
+// Livraisons prévues demain (pour rappels admin)
+router.get('/livraisons-demain', auth, async (req, res) => {
+  try {
+    const demain = new Date();
+    demain.setDate(demain.getDate() + 1);
+    const demainStr = formatDateFr(demain.toISOString());
+    const cotisations = await Cotisation.find({
+      statut: { $in: ['en_cours', 'complete'] },
+      jourLivraisonChoisi: { $regex: '^' + demainStr }
+    }).populate('client', 'nom prenom telephone');
+    res.json(cotisations);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
+
