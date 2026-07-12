@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSAVEUR – Mon Espace</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a6b3c">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0;box-shadow:0 -2px 8px rgba(0,0,0,0.08);z-index:200;}
@@ -886,6 +888,10 @@ chargerParrainage();
 remplirMoisClient();
 ajouterLignePanierClient();
 simulerPoints();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(err => console.error('Erreur SW:', err));
+}
 </script>
 </body>
 </html>
