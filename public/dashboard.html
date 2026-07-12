@@ -444,7 +444,7 @@ tr:last-child td{border-bottom:none;}
         </div>
       </div>
 
-      <div class="section-header">
+     <div class="section-header">
         <div class="section-title">📋 Historique des versements</div>
         <div style="display:flex;gap:8px;">
           <select id="p-filter-mode" onchange="filtrerPaiements()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
@@ -455,6 +455,7 @@ tr:last-child td{border-bottom:none;}
             <option value="Espèces">Espèces</option>
           </select>
           <button class="btn btn-green btn-sm" onclick="exporterCSVPaiements()">📥 Export CSV</button>
+          <button class="btn btn-amber btn-sm" onclick="genererRapportMensuel()">📊 Rapport mensuel PDF</button>
         </div>
       </div>
       <div class="table-wrap" style="margin-bottom:16px;">
@@ -1567,6 +1568,113 @@ async function confirmerRelance() {
   const data = await res.json();
   alert('✅ ' + data.message);
   document.getElementById('modal-retards').classList.remove('show');
+}
+function genererRapportMensuel() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const vert = [26, 107, 60];
+  const or = [200, 150, 12];
+  const w = 210;
+  const fmt = n => Number(n||0).toLocaleString('fr-FR');
+  const maintenant = new Date();
+  const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const moisActuel = moisNoms[maintenant.getMonth()] + ' ' + maintenant.getFullYear();
+
+  // En-tête
+  doc.setFillColor(...vert);
+  doc.rect(0, 0, w, 35, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BIOSAVEUR', 14, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Rapport Comptable Mensuel', 14, 24);
+  doc.setFontSize(9);
+  doc.text(moisActuel, w - 14, 16, { align: 'right' });
+  doc.text('Généré le ' + maintenant.toLocaleDateString('fr-FR'), w - 14, 24, { align: 'right' });
+
+  let y = 48;
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('RÉSUMÉ FINANCIER', 14, y);
+  y += 10;
+
+  const collecte = pCotisations.reduce((s,c) => s + (c.montantCollecte||0), 0);
+  const objectif = pCotisations.reduce((s,c) => s + (c.montantObjectif||0), 0);
+  const nbVersements = pVersements.length;
+  const nbClients = new Set(pCotisations.map(c => c.client?._id)).size;
+  const nbLivrees = pCotisations.filter(c => c.statut === 'livre').length;
+
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  const lignes = [
+    ['Total collecté', fmt(collecte) + ' FCFA'],
+    ['Objectif total', fmt(objectif) + ' FCFA'],
+    ['Nombre de versements', String(nbVersements)],
+    ['Clients actifs', String(nbClients)],
+    ['Livraisons effectuées', String(nbLivrees)]
+  ];
+  lignes.forEach(([label, val]) => {
+    doc.text(label + ' :', 14, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(val, 100, y);
+    doc.setFont('helvetica', 'normal');
+    y += 8;
+  });
+
+  y += 6;
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('RÉPARTITION PAR MODE DE PAIEMENT', 14, y);
+  y += 10;
+
+  const modes = {};
+  pVersements.forEach(v => { const m = v.modePaiement||'Autre'; modes[m] = (modes[m]||0) + (v.montant||0); });
+  doc.setFontSize(10);
+  doc.setFillColor(...vert);
+  doc.rect(14, y - 5, w - 28, 8, 'F');
+  doc.setTextColor(255,255,255);
+  doc.text('Mode', 16, y);
+  doc.text('Montant', w - 16, y, { align: 'right' });
+  y += 10;
+  doc.setTextColor(0,0,0);
+  doc.setFont('helvetica', 'normal');
+  Object.entries(modes).forEach(([mode, montant]) => {
+    doc.text(mode, 16, y);
+    doc.text(fmt(montant) + ' FCFA', w - 16, y, { align: 'right' });
+    y += 8;
+  });
+
+  y += 10;
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('TOP 5 CLIENTS', 14, y);
+  y += 10;
+
+  const topClients = [...pCotisations].sort((a,b) => (b.montantCollecte||0)-(a.montantCollecte||0)).slice(0,5);
+  doc.setFontSize(10);
+  doc.setTextColor(0,0,0);
+  doc.setFont('helvetica', 'normal');
+  topClients.forEach((c, i) => {
+    doc.text((i+1) + '. ' + (c.client?.nom||'?') + ' ' + (c.client?.prenom||''), 16, y);
+    doc.text(fmt(c.montantCollecte) + ' FCFA', w - 16, y, { align: 'right' });
+    y += 8;
+  });
+
+  // Pied de page
+  doc.setFillColor(...vert);
+  doc.rect(0, 282, w, 15, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text('BIOSAVEUR - Abobo N\'Dotre, Abidjan, Cote d\'Ivoire | Tel: 0769476546', w / 2, 290, { align: 'center' });
+
+  doc.save('Rapport_BIOSAVEUR_' + moisActuel.replace(' ', '_') + '.pdf');
 }
 
 function exporterCSVPaiements() {
