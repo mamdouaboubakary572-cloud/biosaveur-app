@@ -1,9 +1,5 @@
-const CACHE_NAME = 'biosaveur-v2';
+const CACHE_NAME = 'biosaveur-v3';
 const URLS_A_METTRE_EN_CACHE = [
-  '/',
-  '/index.html',
-  '/dashboard.html',
-  '/client.html',
   '/logo_biosaveur.png',
   '/manifest.json'
 ];
@@ -26,6 +22,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
