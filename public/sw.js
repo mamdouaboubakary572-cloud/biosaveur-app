@@ -1,6 +1,31 @@
-self.addEventListener('install', e => e.waitUntil(
-  caches.open('biosaveur-v1').then(cache => cache.addAll(['/','index.html','dashboard.html','client.html']))
-));
-self.addEventListener('fetch', e => e.respondWith(
-  caches.match(e.request).then(r => r || fetch(e.request))
-));
+const CACHE_NAME = 'biosaveur-v2';
+const URLS_A_METTRE_EN_CACHE = [
+  '/',
+  '/index.html',
+  '/dashboard.html',
+  '/client.html',
+  '/logo_biosaveur.png',
+  '/manifest.json'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_A_METTRE_EN_CACHE))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(noms => Promise.all(
+      noms.filter(nom => nom !== CACHE_NAME).map(nom => caches.delete(nom))
+    ))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
+});
