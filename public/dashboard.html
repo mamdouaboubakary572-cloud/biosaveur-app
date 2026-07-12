@@ -1569,27 +1569,41 @@ async function confirmerRelance() {
   alert('✅ ' + data.message);
   document.getElementById('modal-retards').classList.remove('show');
 }
-function genererRapportMensuel() {
+async function genererRapportMensuel() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const vert = [26, 107, 60];
-  const or = [200, 150, 12];
   const w = 210;
-  const fmt = n => Number(n||0).toLocaleString('fr-FR');
+  const fmt = n => Number(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const maintenant = new Date();
   const moisNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const moisActuel = moisNoms[maintenant.getMonth()] + ' ' + maintenant.getFullYear();
 
+  // Charger le logo
+  const logoBase64 = await new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/logo_biosaveur.png';
+  });
+
   // En-tête
   doc.setFillColor(...vert);
   doc.rect(0, 0, w, 35, 'F');
+  if (logoBase64) doc.addImage(logoBase64, 'PNG', 14, 7, 20, 20);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('BIOSAVEUR', 14, 16);
+  doc.text('BIOSAVEUR', logoBase64 ? 38 : 14, 16);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Rapport Comptable Mensuel', 14, 24);
+  doc.text('Rapport Comptable Mensuel', logoBase64 ? 38 : 14, 24);
   doc.setFontSize(9);
   doc.text(moisActuel, w - 14, 16, { align: 'right' });
   doc.text('Généré le ' + maintenant.toLocaleDateString('fr-FR'), w - 14, 24, { align: 'right' });
@@ -1667,12 +1681,14 @@ function genererRapportMensuel() {
     y += 8;
   });
 
-  // Pied de page
+  // Pied de page avec mentions légales
   doc.setFillColor(...vert);
-  doc.rect(0, 282, w, 15, 'F');
+  doc.rect(0, 268, w, 29, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text('BIOSAVEUR - Abobo N\'Dotre, Abidjan, Cote d\'Ivoire | Tel: 0769476546', w / 2, 290, { align: 'center' });
+  doc.setFontSize(7);
+  doc.text('AGRO VIVDURABLE SARL au capital de 1 000 000 FCFA - RCCM : CI-ABJ-03-2026-B12-02100 - IDU : CI-2026-0058857 H', w / 2, 275, { align: 'center' });
+  doc.text('Siège social : Abidjan, N\'dotré, non loin du marché de Sotraprim, quartier lot 3141, îlot 283, 01 BPM 6123 Abidjan 01', w / 2, 281, { align: 'center' });
+  doc.text('biosaveur48@gmail.com - Tél : 0757227998 / 0565454444', w / 2, 287, { align: 'center' });
 
   doc.save('Rapport_BIOSAVEUR_' + moisActuel.replace(' ', '_') + '.pdf');
 }
