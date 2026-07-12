@@ -400,10 +400,15 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
-    <!-- ===== LIVRAISONS ===== -->
+   <!-- ===== LIVRAISONS ===== -->
     <div class="section" id="section-livraisons">
       <div class="section-header">
         <div class="section-title">🚚 Suivi des Livraisons</div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:16px;">
+        <div class="chart-title">📅 Livraisons prévues demain</div>
+        <div id="livraisons-demain-list"><div class="empty">Chargement...</div></div>
       </div>
       <div class="table-wrap">
         <table>
@@ -1162,9 +1167,24 @@ function _genererPDF(c) {
   const res = await fetch('/api/cotisations/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
   if (res.ok) { alert('✅ Cotisation supprimée'); chargerCotisations(); }
 }
+async function chargerLivraisonsDemain() {
+  const res = await fetch('/api/cotisations/livraisons-demain', { headers:{'Authorization':'Bearer '+token} });
+  const data = await res.json();
+  const div = document.getElementById('livraisons-demain-list');
+  if (!data.length) { div.innerHTML = '<div class="empty">Aucune livraison prévue demain</div>'; return; }
+  div.innerHTML = data.map(c => {
+    const msg = 'Bonjour ' + (c.client?.nom||'') + ', un petit rappel BIOSAVEUR 🐔 : votre livraison est prévue demain (' + c.jourLivraisonChoisi + '). À bientôt !';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">' +
+    '<div><strong>' + (c.client?.nom||'?') + ' ' + (c.client?.prenom||'') + '</strong> — ' + (c.client?.telephone||'') +
+    '<br><small style="color:var(--text-muted)">' + c.mois + ' · ' + c.jourLivraisonChoisi + '</small></div>' +
+    '<button class="btn btn-green btn-sm" onclick="ouvrirWhatsApp(\'' + (c.client?.telephone||'') + '\', \'' + msg.replace(/'/g,"\\'") + '\')">💬 Rappeler</button>' +
+    '</div>';
+  }).join('');
+}
 
 // ─── LIVRAISONS ────────────────────────────────────────
 async function chargerLivraisons() {
+  chargerLivraisonsDemain();
   const res = await fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} });
   const data = await res.json();
   const livraisons = data.filter(c => c.statut === 'complete' || c.statut === 'livre');
