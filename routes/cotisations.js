@@ -594,5 +594,47 @@ router.get('/livraisons-aujourdhui', auth, async (req, res) => {
   }
 });
 
+// Prévision de demande (moyenne pondérée des 3 derniers mois)
+router.get('/prevision-demande', auth, async (req, res) => {
+  try {
+    const maintenant = new Date();
+    const mois3 = [];
+    for (let i = 2; i >= 0; i--) {
+      const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
+      mois3.push({ debut: d, fin: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59) });
+    }
+
+    const poids = [1, 2, 3]; // le mois le plus récent compte 3x plus que le plus ancien
+    let totalPondere = 0;
+    let totalPoids = 0;
+    const detailParProduit = {};
+
+    for (let i = 0; i < mois3.length; i++) {
+      const cotisationsDuMois = await Cotisation.find({
+        createdAt: { $gte: mois3[i].debut, $lte: mois3[i].fin }
+      });
+      let quantiteMois = 0;
+      cotisationsDuMois.forEach(c => {
+        (c.articles || []).forEach(a => {
+          quantiteMois += a.quantite;
+          detailParProduit[a.produit] = (detailParProduit[a.produit] || 0) + a.quantite * poids[i];
+        });
+      });
+      totalPondere += quantiteMois * poids[i];
+      totalPoids += poids[i];
+    }
+
+    const previsionTotale = totalPoids > 0 ? Math.round(totalPondere / totalPoids) : 0;
+    const topProduits = Object.entries(detailParProduit)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([produit, poids]) => ({ produit, quantiteEstimee: Math.round(poids / totalPoids) }));
+
+    res.json({ previsionTotale, topProduits });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
 
