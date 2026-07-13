@@ -571,5 +571,19 @@ router.get('/livraisons-demain', auth, async (req, res) => {
   }
 });
 
+// Livraisons du jour (pour le rôle livreur)
+router.get('/livraisons-aujourdhui', auth, async (req, res) => {
+  try {
+    const aujourdhui = formatDateFr(new Date().toISOString());
+    const cotisations = await Cotisation.find({
+      statut: { $in: ['en_cours', 'complete'] },
+      jourLivraisonChoisi: { $regex: '^' + aujourdhui }
+    }).populate('client', 'nom prenom telephone localisation');
+    res.json(cotisations);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
 
