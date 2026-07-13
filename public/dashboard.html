@@ -360,11 +360,24 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
-    <!-- ===== COTISATIONS ===== -->
+  <!-- ===== COTISATIONS ===== -->
     <div class="section" id="section-cotisations">
       <div class="section-header">
         <div class="section-title">🐔 Gestion des Cotisations</div>
         <button class="btn btn-green" onclick="toggleForm('form-cotisation'); remplirMoisDisponibles(); document.getElementById('panier-lignes').innerHTML=''; ajouterLignePanier();">+ Nouvelle cotisation</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="text" id="cot-search" placeholder="🔍 Rechercher un client..." style="flex:1;min-width:180px;" oninput="filtrerCotisationsAffichees()">
+        <select id="cot-filter-statut" onchange="filtrerCotisationsAffichees()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <option value="">Tous les statuts</option>
+          <option value="en_cours">En cours</option>
+          <option value="complete">Complètes</option>
+          <option value="livre">Livrées</option>
+        </select>
+        <select id="cot-filter-mois" onchange="filtrerCotisationsAffichees()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+          <option value="">Tous les mois</option>
+        </select>
       </div>
 
       <div class="form-box" id="form-cotisation">
@@ -959,12 +972,38 @@ function recupererArticlesPanier() {
   });
   return articles;
 }
-  // ─── COTISATIONS ───────────────────────────────────────
+// ─── COTISATIONS ───────────────────────────────────────
+let allCotisations = [];
 async function chargerCotisations() {
   const res = await fetch('/api/cotisations', { headers:{'Authorization':'Bearer '+token} });
-  const data = await res.json();
-  document.getElementById('total-cotisations').textContent = data.filter(c => c.statut === 'en_cours').length;
-  document.getElementById('total-collecte').textContent = nbFCFA(data.reduce((s,c) => s + c.montantCollecte, 0));
+  allCotisations = await res.json();
+  document.getElementById('total-cotisations').textContent = allCotisations.filter(c => c.statut === 'en_cours').length;
+  document.getElementById('total-collecte').textContent = nbFCFA(allCotisations.reduce((s,c) => s + c.montantCollecte, 0));
+
+  const selectMois = document.getElementById('cot-filter-mois');
+  const moisUniques = [...new Set(allCotisations.map(c => c.mois))];
+  selectMois.innerHTML = '<option value="">Tous les mois</option>' + moisUniques.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+
+  filtrerCotisationsAffichees();
+}
+
+function filtrerCotisationsAffichees() {
+  const recherche = (document.getElementById('cot-search').value || '').toLowerCase();
+  const statut = document.getElementById('cot-filter-statut').value;
+  const mois = document.getElementById('cot-filter-mois').value;
+
+  const data = allCotisations.filter(c => {
+    const nomComplet = ((c.client?.nom||'') + ' ' + (c.client?.prenom||'')).toLowerCase();
+    const matchRecherche = !recherche || nomComplet.includes(recherche);
+    const matchStatut = !statut || c.statut === statut;
+    const matchMois = !mois || c.mois === mois;
+    return matchRecherche && matchStatut && matchMois;
+  });
+
+  afficherCotisationsFiltrees(data);
+}
+
+function afficherCotisationsFiltrees(data) {
   const tbody = document.getElementById('cotisations-table');
   const couleur = c => c.statut === 'complete' ? '#1a6b3c' : c.statut === 'livre' ? '#1565c0' : '#e65100';
   tbody.innerHTML = data.map(c => {
@@ -983,7 +1022,7 @@ async function chargerCotisations() {
       (c.statut === 'complete' ? '<button class="btn btn-blue btn-sm" onclick="confirmerLivraison(\'' + c._id + '\')">🚚 Livrer</button> ' : '') +
       '<button class="btn btn-amber btn-sm" onclick="genererBonLivraison(\'' + c._id + '\')">📄 Bon</button> ' +
       '<button class="btn btn-red btn-sm" onclick="supprimerCotisation(\'' + c._id + '\')">🗑</button></td></tr>';
-  }).join('') || '<tr><td colspan="9" class="empty">Aucune cotisation</td></tr>';
+ }).join('') || '<tr><td colspan="9" class="empty">Aucune cotisation ne correspond à ces filtres</td></tr>';
 }
 async function creerCotisation() {
   const clientId = document.getElementById('cot-client').value;
