@@ -46,6 +46,7 @@ const tokenExistant = localStorage.getItem('token');
 const roleExistant = localStorage.getItem('role');
 if (tokenExistant) {
   if (roleExistant === 'client') window.location.href = '/client.html';
+  else if (roleExistant === 'livreur') window.location.href = '/livreur.html';
   else window.location.href = '/dashboard.html';
 }
 document.getElementById('motDePasse').addEventListener('keydown', function(e) {
@@ -75,7 +76,8 @@ async function seConnecter() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
       localStorage.setItem('user-nom', data.user.nom + ' ' + data.user.prenom);
-      if (data.user.role === 'client') window.location.href = '/client.html';
+     if (data.user.role === 'client') window.location.href = '/client.html';
+      else if (data.user.role === 'livreur') window.location.href = '/livreur.html';
       else window.location.href = '/dashboard.html';
     } else {
       errDiv.textContent = data.message || 'Identifiants incorrects.';
