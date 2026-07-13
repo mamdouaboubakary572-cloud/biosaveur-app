@@ -834,20 +834,20 @@ function copierCode() {
     document.getElementById('hist-nb-livraisons').textContent = data.nombreLivraisons;
     document.getElementById('hist-frequence').textContent = data.frequenceMoyenneJours ? data.frequenceMoyenneJours + ' j' : '–';
 
-    let badge = { emoji: '🥉', label: 'Bronze', couleur: '#a97142' };
-    if (data.nombreLivraisons >= 6) badge = { emoji: '🥇', label: 'Or', couleur: '#c8960c' };
+   let badge = { emoji: '🥉', label: 'Bronze', couleur: '#a97142' };
+    if (data.nombreLivraisons >= 6) badge = { emoji: '👑', label: 'Ambassadeur', couleur: '#c8960c' };
     else if (data.nombreLivraisons >= 3) badge = { emoji: '🥈', label: 'Argent', couleur: '#8a8a8a' };
     document.getElementById('badge-fidelite').innerHTML =
-      '<span style="background:' + badge.couleur + '20;color:' + badge.couleur + ';padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">' + badge.emoji + ' Client ' + badge.label + '</span>';
-
+      '<span style="background:' + badge.couleur + '20;color:' + badge.couleur + ';padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">' + badge.emoji + ' Client ' + badge.label + '</span>' +
+      (data.nombreLivraisons >= 6 ? '<div style="font-size:11px;color:var(--gold);margin-top:4px;">🎁 -5% automatique sur vos prochaines cotisations</div>' : '');
     const div = document.getElementById('historique-list');
     if (!data.cotisationsLivrees.length) {
       div.innerHTML = '<div class="empty">Aucune livraison effectuée pour le moment</div>';
     } else {
       div.innerHTML = data.cotisationsLivrees.map(c => {
         const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
-        return `<div class="cotisation-item">
-          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small></div><span class="badge badge-blue">Livrée 🚚</span></div>
+       return `<div class="cotisation-item">
+          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small>${c.reductionAmbassadeur?'<br><small style="color:var(--gold);font-weight:600;">🎁 -5% Ambassadeur appliqué</small>':''}</div><span class="badge ${bc}">${sl}</span></div>
           <div class="cot-stats"><span>Total : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${c.dateLivraisonEffective?formatDate(c.dateLivraisonEffective):'–'}</span></div>
         </div>`;
       }).join('');
