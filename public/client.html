@@ -83,12 +83,13 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
 </header>
 <div class="main">
 
-  <!-- Profil -->
-  <div class="profile-card" id="nav-profil">
+ <!-- Profil -->
+  <div class="profile-card">
     <div class="avatar" id="avatar">?</div>
     <div class="profile-info">
       <h2 id="profile-nom">Chargement...</h2>
       <p id="profile-tel">–</p>
+      <div id="badge-fidelite" style="margin-top:4px;"></div>
     </div>
     <button onclick="afficherQR()" class="btn-qr">🔲 Mon QR</button>
 <button onclick="ouvrirNotifications()" class="btn-qr" style="position:relative;background:var(--green-light);color:var(--green);">
@@ -824,7 +825,7 @@ function copierCode() {
   const message = 'Salut ! Rejoins BIOSAVEUR 🐔 avec mon code de parrainage ' + code + ' et reçois des poulets frais livrés à domicile. Inscris-toi vite !';
   window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
 }
-  async function chargerHistorique() {
+ async function chargerHistorique() {
   try {
     const res = await fetch('/api/cotisations/mon-historique', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
@@ -832,6 +833,12 @@ function copierCode() {
     document.getElementById('hist-total-livre').textContent = nbFCFA(data.totalLivre);
     document.getElementById('hist-nb-livraisons').textContent = data.nombreLivraisons;
     document.getElementById('hist-frequence').textContent = data.frequenceMoyenneJours ? data.frequenceMoyenneJours + ' j' : '–';
+
+    let badge = { emoji: '🥉', label: 'Bronze', couleur: '#a97142' };
+    if (data.nombreLivraisons >= 6) badge = { emoji: '🥇', label: 'Or', couleur: '#c8960c' };
+    else if (data.nombreLivraisons >= 3) badge = { emoji: '🥈', label: 'Argent', couleur: '#8a8a8a' };
+    document.getElementById('badge-fidelite').innerHTML =
+      '<span style="background:' + badge.couleur + '20;color:' + badge.couleur + ';padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">' + badge.emoji + ' Client ' + badge.label + '</span>';
 
     const div = document.getElementById('historique-list');
     if (!data.cotisationsLivrees.length) {
