@@ -56,13 +56,22 @@ router.post('/', auth, async (req, res) => {
       prixUnitaire: a.prixUnitaire,
       sousTotal: a.quantite * a.prixUnitaire
     }));
-    const montantObjectif = articlesCalcules.reduce((s, a) => s + a.sousTotal, 0);
+    let montantObjectif = articlesCalcules.reduce((s, a) => s + a.sousTotal, 0);
+
+    // Vérifier si le client est Ambassadeur (6+ livraisons) → -5%
+    const nbLivraisons = await Cotisation.countDocuments({ client: clientId, statut: 'livre' });
+    const estAmbassadeur = nbLivraisons >= 6;
+    if (estAmbassadeur) {
+      montantObjectif = Math.round(montantObjectif * 0.95);
+    }
+
     const cotisation = new Cotisation({
       client: clientId,
       articles: articlesCalcules,
       montantObjectif,
       mois,
-      jourLivraisonChoisi
+      jourLivraisonChoisi,
+      reductionAmbassadeur: estAmbassadeur
     });
     await cotisation.save();
     try {
