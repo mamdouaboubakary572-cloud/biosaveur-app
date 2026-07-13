@@ -305,6 +305,11 @@ tr:last-child td{border-bottom:none;}
   </div>
 
   <div class="chart-card" style="margin-top:16px;">
+    <div class="chart-title">🔮 Prévision de demande (mois prochain)</div>
+    <div id="prevision-demande"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <div class="chart-card" style="margin-top:16px;">
     <div class="chart-title">⭐ Fiabilité des clients</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
       <div class="stat-card" style="padding:12px;text-align:center;">
@@ -790,13 +795,20 @@ async function chargerDashboard() {
     const enRetard = cots.some(c => c.statut === 'en_cours' && (c.montantCollecte||0) < (c.montantObjectif||0) * 0.5);
     if (enRetard) nbSurveiller++; else nbFiables++;
   });
-  document.getElementById('fiab-nb-fiables').textContent = nbFiables;
+ document.getElementById('fiab-nb-fiables').textContent = nbFiables;
   document.getElementById('fiab-nb-surveiller').textContent = nbSurveiller;
   document.getElementById('fiab-nb-nouveaux').textContent = nbNouveaux;
 
-  // Charts
-  
-  // Charts
+  // Prévision de demande
+  fetch('/api/cotisations/prevision-demande', h).then(r => r.json()).then(prevision => {
+    const div = document.getElementById('prevision-demande');
+    if (!prevision.previsionTotale) { div.innerHTML = '<div class="empty">Pas assez de données pour estimer (au moins 1 mois d\'historique nécessaire)</div>'; return; }
+    div.innerHTML = '<div style="text-align:center;margin-bottom:14px;"><div style="font-size:32px;font-weight:700;color:var(--green);">' + prevision.previsionTotale + '</div><div style="font-size:12px;color:var(--text-muted);">unités à prévoir (estimation)</div></div>' +
+      '<div style="font-size:12px;font-weight:600;margin-bottom:8px;">Top produits à préparer :</div>' +
+      prevision.topProduits.map(p => '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>' + p.produit + '</span><strong>' + p.quantiteEstimee + '</strong></div>').join('');
+  }).catch(() => {});
+
+ // Charts
   const mois = statsMensuelles.map(s => s.label);
   const collectes = statsMensuelles.map(s => s.collecte);
   const objectifs = statsMensuelles.map(s => s.objectif);
