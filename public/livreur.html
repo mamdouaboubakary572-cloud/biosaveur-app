@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIOSAVEUR – Mode Livreur</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--blue:#1565c0;--radius:12px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+header{background:var(--green);color:white;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:18px;font-weight:700;}
+.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;}
+.main{max-width:600px;margin:0 auto;padding:16px;}
+.stat-banner{background:var(--surface);border-radius:var(--radius);padding:16px;text-align:center;margin-bottom:16px;box-shadow:var(--shadow);}
+.stat-banner .n{font-size:32px;font-weight:700;color:var(--green);}
+.stat-banner .l{font-size:13px;color:var(--text-muted);}
+.livraison-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
+.livraison-card.confirmee{opacity:0.5;}
+.l-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.l-nom{font-weight:700;font-size:16px;}
+.l-tel{font-size:13px;color:var(--text-muted);margin-top:2px;}
+.l-loc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.l-produits{font-size:13px;color:var(--text-muted);margin:8px 0;padding:8px;background:var(--green-light);border-radius:8px;}
+.l-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.btn{padding:12px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;text-align:center;display:block;}
+.btn-green{background:var(--green);color:white;}
+.btn-blue{background:var(--blue);color:white;}
+.empty{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty .icon{font-size:48px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🚚 BIOSAVEUR Livreur</div>
+  <button class="btn-logout" onclick="deconnexion()">Déconnexion</button>
+</header>
+<div class="main">
+  <div class="stat-banner">
+    <div class="n" id="nb-total">0</div>
+    <div class="l">Livraisons prévues aujourd'hui</div>
+  </div>
+  <div id="livraisons-list"><div class="empty">Chargement...</div></div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const role = localStorage.getItem('role');
+if (!token) window.location.href = '/';
+
+function deconnexion() { localStorage.clear(); window.location.href = '/'; }
+function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
+
+async function chargerLivraisonsJour() {
+  const res = await fetch('/api/cotisations/livraisons-aujourdhui', { headers: { 'Authorization': 'Bearer ' + token } });
+  const data = await res.json();
+  document.getElementById('nb-total').textContent = data.length;
+  const div = document.getElementById('livraisons-list');
+  if (!data.length) {
+    div.innerHTML = '<div class="empty"><div class="icon">✅</div>Aucune livraison prévue aujourd\'hui</div>';
+    return;
+  }
+  div.innerHTML = data.map(c => {
+    const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
+    const tel = (c.client?.telephone || '').replace(/\D/g, '');
+    return '<div class="livraison-card' + (c.statut==='livre'?' confirmee':'') + '" id="carte-' + c._id + '">' +
+      '<div class="l-header"><div><div class="l-nom">' + (c.client?.nom||'?') + ' ' + (c.client?.prenom||'') + '</div>' +
+      '<div class="l-tel">📞 ' + (c.client?.telephone||'') + '</div>' +
+      (c.client?.localisation ? '<div class="l-loc">📍 ' + c.client.localisation + '</div>' : '') + '</div></div>' +
+      '<div class="l-produits">' + produitsTxt + '</div>' +
+      '<div class="l-actions">' +
+      '<a href="tel:' + tel + '" class="btn btn-blue">📞 Appeler</a>' +
+      (c.statut === 'complete' ? '<button class="btn btn-green" onclick="confirmerLivraison(\'' + c._id + '\')">✓ Confirmer</button>' : '<span style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px;">En attente paiement</span>') +
+      '</div></div>';
+  }).join('');
+}
+
+async function confirmerLivraison(id) {
+  if (!confirm('Confirmer cette livraison ?')) return;
+  const res = await fetch('/api/cotisations/' + id + '/livrer', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } });
+  if (res.ok) {
+    alert('✅ Livraison confirmée !');
+    chargerLivraisonsJour();
+  } else {
+    alert('Erreur lors de la confirmation');
+  }
+}
+
+chargerLivraisonsJour();
+</script>
+</body>
+</html>
