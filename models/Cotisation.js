@@ -27,6 +27,7 @@ const cotisationSchema = new mongoose.Schema({
   cotisationPrecedenteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Cotisation' },
  note: { type: Number, min: 1, max: 5 },
   commentaireAvis: { type: String, default: '' },
-  renouvellementAuto: { type: Boolean, default: true }
+  renouvellementAuto: { type: Boolean, default: true },
+  reductionAmbassadeur: { type: Boolean, default: false }
 }, { timestamps: true });
 module.exports = mongoose.model('Cotisation', cotisationSchema);
