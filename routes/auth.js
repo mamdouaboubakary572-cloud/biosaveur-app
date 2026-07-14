@@ -108,12 +108,14 @@ router.get('/qr/:userId', async (req, res) => {
  // Mettre à jour le profil client (nom, prénom, localisation, photo)
 router.put('/profil', auth, async (req, res) => {
   try {
-    const { nom, prenom, localisation, photo } = req.body;
+    const { nom, prenom, localisation, photo, jourNaissance, moisNaissance } = req.body;
     const update = {};
     if (nom) update.nom = nom;
     if (prenom) update.prenom = prenom;
     if (localisation !== undefined) update.localisation = localisation;
     if (photo !== undefined) update.photo = photo;
+    if (jourNaissance) update.jourNaissance = jourNaissance;
+    if (moisNaissance) update.moisNaissance = moisNaissance;
     const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('-motDePasse');
     res.json({ message: 'Profil mis à jour', user });
   } catch (err) {
