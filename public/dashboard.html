@@ -1110,13 +1110,13 @@ async function toggleEncaisse(id) {
     const cotisations = await res.json();
     const c = cotisations.find(x => x._id === cotisationId);
     if (!c) { alert('Cotisation introuvable'); return; }
-    _genererPDF(c);
+    await _genererPDF(c);
   } catch(err) {
     alert('Erreur lors de la génération du bon');
   }
 }
 
-function _genererPDF(c) {
+async function _genererPDF(c) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const vert = [26, 107, 60];
@@ -1125,18 +1125,33 @@ function _genererPDF(c) {
   const w = 210;
   const fmt = n => Number(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
+ // Charger le logo
+  const logoBase64 = await new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/logo_biosaveur.png';
+  });
+
   // En-tête fond vert
   doc.setFillColor(...vert);
   doc.rect(0, 0, w, 35, 'F');
 
+  if (logoBase64) doc.addImage(logoBase64, 'PNG', 14, 6, 22, 22);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('BIOSAVEUR', 14, 16);
+  doc.text('BIOSAVEUR', logoBase64 ? 40 : 14, 16);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Poulet Molo Molo', 14, 23);
-  doc.text('Vous Savez Ce Que Vous Mangez', 14, 29);
+  doc.text('Poulet Molo Molo', logoBase64 ? 40 : 14, 23);
+  doc.text('Vous Savez Ce Que Vous Mangez', logoBase64 ? 40 : 14, 29);
 
   doc.setFontSize(10);
   doc.text('BON DE LIVRAISON', w - 14, 16, { align: 'right' });
@@ -1241,12 +1256,14 @@ function _genererPDF(c) {
   doc.text('Signature Client', 47, y + 20, { align: 'center' });
   doc.text('Cachet & Signature BIOSAVEUR', w - 47, y + 20, { align: 'center' });
 
-  // Pied de page
+ // Pied de page
   doc.setFillColor(...vert);
-  doc.rect(0, 282, w, 15, 'F');
+  doc.rect(0, 268, w, 29, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text('BIOSAVEUR - Abobo N\'Dotre, Abidjan, Cote d\'Ivoire | Tel: 0769476546', w / 2, 290, { align: 'center' });
+  doc.setFontSize(7);
+  doc.text('AGRO VIVDURABLE SARL au capital de 1 000 000 FCFA - RCCM : CI-ABJ-03-2026-B12-02100 - IDU : CI-2026-0058857 H', w / 2, 275, { align: 'center' });
+  doc.text('Siege social : Abidjan, N\'dotre, non loin du marche de Sotraprim, quartier lot 3141, ilot 283, 01 BPM 6123 Abidjan 01', w / 2, 281, { align: 'center' });
+  doc.text('biosaveur48@gmail.com - Tel : 0757227998 / 0565454444', w / 2, 287, { align: 'center' });
 
   doc.save('Bon_Livraison_' + (c.client?.nom || 'client') + '_' + c.mois + '.pdf');
 }
