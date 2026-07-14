@@ -464,7 +464,13 @@ async function chargerProfil() {
     const data = await res.json();
     document.getElementById('profile-nom').textContent = data.nom + ' ' + data.prenom;
     document.getElementById('profile-tel').textContent = '📞 ' + data.telephone;
-    if (data.photo) {       const av = document.getElementById('avatar');       av.innerHTML = '<img src="' + data.photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';     } else {       document.getElementById('avatar').textContent = data.nom[0].toUpperCase();     }     if (data.localisation) {       document.getElementById('profil-localisation') && (document.getElementById('profil-localisation').value = data.localisation);     }
+if (data.localisation) {       document.getElementById('profil-localisation') && (document.getElementById('profil-localisation').value = data.localisation);     }
+    if (data.jourNaissance || data.moisNaissance) {
+      const selectJour = document.getElementById('profil-jour-naissance');
+      if (selectJour && !selectJour.dataset.rempli) { for (let j = 1; j <= 31; j++) selectJour.innerHTML += '<option value="' + j + '">' + j + '</option>'; selectJour.dataset.rempli = '1'; }
+      if (data.jourNaissance) document.getElementById('profil-jour-naissance').value = data.jourNaissance;
+      if (data.moisNaissance) document.getElementById('profil-mois-naissance').value = data.moisNaissance;
+    }
     document.getElementById('user-name').textContent = data.prenom;
     monQRCode = data.qrCode || '';
   } catch(e) {
