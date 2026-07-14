@@ -5,6 +5,43 @@ const QRCode = require('qrcode');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+
+// Inscription publique (auto-inscription, sans connexion admin)
+router.post('/inscription-publique', async (req, res) => {
+  try {
+    const { nom, prenom, telephone, motDePasse, codeParrainSaisi } = req.body;
+    if (!nom || !prenom || !telephone || !motDePasse) {
+      return res.status(400).json({ message: 'Tous les champs sont obligatoires' });
+    }
+    const existant = await User.findOne({ telephone });
+    if (existant) return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
+    const hash = await bcrypt.hash(motDePasse, 10);
+
+    const codeParrainage = 'BSV-' + nom.substring(0, 4).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+    let parrainId = null;
+    if (codeParrainSaisi) {
+      const parrain = await User.findOne({ codeParrainage: codeParrainSaisi.trim().toUpperCase() });
+      if (parrain) {
+        parrainId = parrain._id;
+        parrain.points = (parrain.points || 0) + 500;
+        await parrain.save();
+      }
+    }
+
+    const user = new User({ nom, prenom, telephone, motDePasse: hash, codeParrainage, parrainId, role: 'client' });
+    await user.save();
+    const qrData = `https://biosaveur-app.onrender.com/qr.html?id=${user._id}`;
+    const qrCode = await QRCode.toDataURL(qrData);
+    user.qrCode = qrCode;
+    await user.save();
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ message: 'Inscription réussie', token, user: { nom, prenom, telephone, qrCode, codeParrainage, points: 0 } });
+  } catch (err) {
+    console.log('ERREUR INSCRIPTION PUBLIQUE:', err.message);
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
  
 // Inscription client
 router.post('/inscription', async (req, res) => {
