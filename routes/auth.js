@@ -120,7 +120,9 @@ router.put('/jour-livraison', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
-});// Profil du client connecté
+});
+
+// Profil du client connecté
 router.get('/profil', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-motDePasse');
@@ -129,7 +131,9 @@ router.get('/profil', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
-});// Connexion via QR code
+});
+  
+// Connexion via QR code
 router.get('/qr/:userId', async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select('-motDePasse');
