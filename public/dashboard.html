@@ -304,6 +304,11 @@ tr:last-child td{border-bottom:none;}
     <div id="chaleur-versements"><div class="empty">Chargement...</div></div>
   </div>
 
+ <div class="chart-card" style="margin-top:16px;display:none;" id="carte-anniversaires">
+    <div class="chart-title">🎂 Anniversaires du jour</div>
+    <div id="anniversaires-list"></div>
+  </div>
+
   <div class="chart-card" style="margin-top:16px;">
     <div class="chart-title">🔮 Prévision de demande (mois prochain)</div>
     <div id="prevision-demande"><div class="empty">Chargement...</div></div>
@@ -798,6 +803,20 @@ async function chargerDashboard() {
  document.getElementById('fiab-nb-fiables').textContent = nbFiables;
   document.getElementById('fiab-nb-surveiller').textContent = nbSurveiller;
   document.getElementById('fiab-nb-nouveaux').textContent = nbNouveaux;
+  
+  // Anniversaires du jour
+  fetch('/api/auth/anniversaires-jour', h).then(r => r.json()).then(anniv => {
+    const carte = document.getElementById('carte-anniversaires');
+    if (!anniv.length) { carte.style.display = 'none'; return; }
+    carte.style.display = 'block';
+    document.getElementById('anniversaires-list').innerHTML = anniv.map(c => {
+      const msg = 'Joyeux anniversaire ' + c.nom + ' 🎉🎂 Toute l\'équipe BIOSAVEUR vous souhaite une merveilleuse journée ! En cadeau, contactez-nous pour une petite surprise sur votre prochaine commande 🐔';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<div><strong>🎉 ' + c.nom + ' ' + c.prenom + '</strong><br><small style="color:var(--text-muted)">' + c.telephone + '</small></div>' +
+      '<button class="btn btn-green btn-sm" onclick="ouvrirWhatsApp(\'' + c.telephone + '\', \'' + msg.replace(/'/g,"\\'") + '\')">🎂 Souhaiter</button>' +
+      '</div>';
+    }).join('');
+  }).catch(() => {});
 
   // Prévision de demande
   fetch('/api/cotisations/prevision-demande', h).then(r => r.json()).then(prevision => {
