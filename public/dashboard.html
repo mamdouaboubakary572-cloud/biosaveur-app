@@ -303,7 +303,11 @@ tr:last-child td{border-bottom:none;}
     <div class="chart-title">🌡️ Carte de chaleur des versements (jour/heure)</div>
     <div id="chaleur-versements"><div class="empty">Chargement...</div></div>
   </div>
-
+<div class="chart-card" style="margin-top:16px;">
+    <div class="chart-title">⭐ Avis des clients</div>
+    <div id="avis-resume" style="text-align:center;margin-bottom:14px;"></div>
+    <div id="avis-list"></div>
+  </div>
  <div class="chart-card" style="margin-top:16px;display:none;" id="carte-anniversaires">
     <div class="chart-title">🎂 Anniversaires du jour</div>
     <div id="anniversaires-list"></div>
@@ -803,6 +807,19 @@ async function chargerDashboard() {
  document.getElementById('fiab-nb-fiables').textContent = nbFiables;
   document.getElementById('fiab-nb-surveiller').textContent = nbSurveiller;
   document.getElementById('fiab-nb-nouveaux').textContent = nbNouveaux;
+  
+  // Avis clients
+  fetch('/api/cotisations/avis', h).then(r => r.json()).then(data => {
+    const resumeDiv = document.getElementById('avis-resume');
+    if (!data.total) { resumeDiv.innerHTML = '<div class="empty">Aucun avis pour le moment</div>'; document.getElementById('avis-list').innerHTML = ''; return; }
+    resumeDiv.innerHTML = '<div style="font-size:28px;font-weight:700;color:var(--gold);">' + data.moyenne + ' / 5 ' + '⭐'.repeat(Math.round(data.moyenne)) + '</div><div style="font-size:12px;color:var(--text-muted);">Basé sur ' + data.total + ' avis</div>';
+    document.getElementById('avis-list').innerHTML = data.avis.map(a =>
+      '<div style="padding:10px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:13px;">' + (a.client?.nom||'?') + ' ' + (a.client?.prenom||'') + '</strong><span>' + '⭐'.repeat(a.note) + '</span></div>' +
+      (a.commentaireAvis ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">"' + a.commentaireAvis + '"</div>' : '') +
+      '</div>'
+    ).join('');
+  }).catch(() => {});
   
   // Anniversaires du jour
   fetch('/api/auth/anniversaires-jour', h).then(r => r.json()).then(anniv => {
