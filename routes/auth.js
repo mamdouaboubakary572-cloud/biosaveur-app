@@ -206,4 +206,17 @@ router.get('/anniversaires-jour', auth, async (req, res) => {
   }
 });
 
+// Classement des meilleurs parrains (Top 10)
+router.get('/classement-parrains', auth, async (req, res) => {
+  try {
+    const users = await User.find({ role: 'client', points: { $gt: 0 } })
+      .select('nom prenom points')
+      .sort({ points: -1 })
+      .limit(10);
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
