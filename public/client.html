@@ -870,9 +870,10 @@ function copierCode() {
   const code = document.getElementById('mon-code-parrainage').textContent;
   navigator.clipboard.writeText(code).then(() => alert('✅ Code copié : ' + code));
 }
-  function partagerParrainage() {
+ function partagerParrainage() {
   const code = document.getElementById('mon-code-parrainage').textContent;
-  const message = 'Salut ! Rejoins BIOSAVEUR 🐔 avec mon code de parrainage ' + code + ' et reçois des poulets frais livrés à domicile. Inscris-toi vite !';
+  const lien = 'https://biosaveur-app.onrender.com/inscription.html?parrain=' + encodeURIComponent(code);
+  const message = 'Salut ! Rejoins BIOSAVEUR 🐔 avec mon code de parrainage ' + code + ' et reçois des poulets frais livrés à domicile. Inscris-toi directement ici : ' + lien;
   window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
 }
  async function chargerHistorique() {
