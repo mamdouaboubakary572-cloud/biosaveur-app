@@ -292,10 +292,27 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
       <input type="text" id="profil-prenom" class="form-input" style="margin-bottom:0;">
     </div>
 
-    <!-- Localisation -->
+   <!-- Localisation -->
     <div style="margin-bottom:10px;">
       <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">📍 Quartier / Commune</label>
       <input type="text" id="profil-localisation" class="form-input" placeholder="Ex: Abobo, Cocody, Yopougon..." style="margin-bottom:0;">
+    </div>
+
+    <!-- Anniversaire -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">🎂 Date de naissance (jour et mois)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <select id="profil-jour-naissance" class="form-input" style="margin-bottom:0;">
+          <option value="">Jour</option>
+        </select>
+        <select id="profil-mois-naissance" class="form-input" style="margin-bottom:0;">
+          <option value="">Mois</option>
+          <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+          <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+          <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+          <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+        </select>
+      </div>
     </div>
 
     <!-- Mot de passe -->
@@ -333,6 +350,11 @@ function ouvrirModalProfil() {
   document.getElementById('profil-prenom').value = prenom;
   document.getElementById('profil-ancien-mdp').value = '';
   document.getElementById('profil-nouveau-mdp').value = '';
+  const selectJour = document.getElementById('profil-jour-naissance');
+  if (!selectJour.dataset.rempli) {
+    for (let j = 1; j <= 31; j++) selectJour.innerHTML += '<option value="' + j + '">' + j + '</option>';
+    selectJour.dataset.rempli = '1';
+  }
   document.getElementById('modal-profil').classList.add('show');
 }
 
@@ -394,11 +416,15 @@ async function enregistrerProfil() {
         reader.readAsDataURL(fichier);
       });
     }
+   const jourNaissance = document.getElementById('profil-jour-naissance').value;
+    const moisNaissance = document.getElementById('profil-mois-naissance').value;
     const bodyProfil = {};
     if (nom) bodyProfil.nom = nom;
     if (prenom) bodyProfil.prenom = prenom;
     if (localisation !== undefined) bodyProfil.localisation = localisation;
     if (photo) bodyProfil.photo = photo;
+    if (jourNaissance) bodyProfil.jourNaissance = parseInt(jourNaissance);
+    if (moisNaissance) bodyProfil.moisNaissance = parseInt(moisNaissance);
     if (Object.keys(bodyProfil).length > 0) {
       const res = await fetch('/api/auth/profil', {
         method: 'PUT',
