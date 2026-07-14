@@ -220,8 +220,14 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   <!-- Liste des filleuls -->
   <div style="font-size:13px;font-weight:600;margin-bottom:8px;">👥 Mes filleuls (<span id="nb-filleuls">0</span>)</div>
   <div id="liste-filleuls"><div class="empty">Aucun filleul pour le moment</div></div>
-</div>
 
+  <!-- Classement -->
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🏆 Top Parrains BIOSAVEUR</div>
+    <div id="classement-parrains"><div class="empty">Chargement...</div></div>
+  </div>
+</div>
+  
   <!-- Messages -->
  <div class="section-card" id="nav-messages">
     <div class="section-title">💬 Contacter BIOSAVEUR</div>
@@ -865,6 +871,21 @@ async function marquerToutLu() {
   document.getElementById('sim-points').textContent = nbFCFA(points) + ' pts';
   document.getElementById('sim-fcfa').textContent = '≈ ' + nbFCFA(fcfa) + ' FCFA de réduction';
 }
+async function chargerClassementParrains() {
+  try {
+    const res = await fetch('/api/auth/classement-parrains', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const div = document.getElementById('classement-parrains');
+    if (!data.length) { div.innerHTML = '<div class="empty" style="padding:10px;">Soyez le premier du classement !</div>'; return; }
+    const medailles = ['🥇','🥈','🥉'];
+    div.innerHTML = data.map((u, i) =>
+      '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">' +
+      '<span style="width:22px;text-align:center;">' + (medailles[i] || (i+1)) + '</span>' +
+      '<span style="flex:1;">' + u.nom + ' ' + u.prenom + '</span>' +
+      '<strong style="color:var(--gold);">' + u.points + ' pts</strong></div>'
+    ).join('');
+  } catch(e) {}
+}
 
 function copierCode() {
   const code = document.getElementById('mon-code-parrainage').textContent;
@@ -943,6 +964,7 @@ chargerMessages();
 chargerHistorique();
 chargerNotifications();
 chargerParrainage();
+chargerClassementParrains();
 remplirMoisClient();
 ajouterLignePanierClient();
 simulerPoints();
