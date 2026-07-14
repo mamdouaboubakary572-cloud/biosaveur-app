@@ -155,4 +155,18 @@ router.get('/generer-codes-parrainage', auth, async (req, res) => {
   }
 });
 
+// Anniversaires du jour (pour l'admin)
+router.get('/anniversaires-jour', auth, async (req, res) => {
+  try {
+    const aujourdhui = new Date();
+    const jour = aujourdhui.getDate();
+    const mois = aujourdhui.getMonth() + 1;
+    const clients = await User.find({ jourNaissance: jour, moisNaissance: mois, role: 'client' })
+      .select('nom prenom telephone');
+    res.json(clients);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
