@@ -636,5 +636,19 @@ router.get('/prevision-demande', auth, async (req, res) => {
   }
 });
 
+// Tous les avis clients (pour le dashboard admin)
+router.get('/avis', auth, async (req, res) => {
+  try {
+    const cotisations = await Cotisation.find({ note: { $exists: true } })
+      .populate('client', 'nom prenom')
+      .sort({ updatedAt: -1 })
+      .limit(20);
+    const moyenne = cotisations.length ? (cotisations.reduce((s,c) => s + c.note, 0) / cotisations.length).toFixed(1) : 0;
+    res.json({ avis: cotisations, moyenne, total: cotisations.length });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
 
