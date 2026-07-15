@@ -3,8 +3,15 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 const bcrypt = require('bcryptjs');
+const webpush = require('web-push');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+
+webpush.setVapidDetails(
+  'mailto:biosaveur48@gmail.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 // Inscription publique (auto-inscription, sans connexion admin)
 router.post('/inscription-publique', async (req, res) => {
@@ -221,6 +228,21 @@ router.get('/classement-parrains', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
+});
+
+// Enregistrer l'abonnement aux notifications push
+router.post('/push-subscribe', auth, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.id, { pushSubscription: req.body.subscription });
+    res.json({ message: 'Abonnement enregistré' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+// Donner la clé publique VAPID au frontend
+router.get('/vapid-public-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
 module.exports = router;
