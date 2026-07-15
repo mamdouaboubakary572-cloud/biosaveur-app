@@ -84,14 +84,16 @@ router.post('/', auth, async (req, res) => {
       }
     } catch (smsErr) { console.error('SMS err:', smsErr.message); }
    
-   // Créer une notification pour le client
+  // Créer une notification pour le client
     try {
       await Notification.create({
         userId: cotisation.client,
-        message: `Votre cotisation BIOSAVEUR de ${mois} a été créée. Montant objectif : ${montantObjectif} FCFA.`,
-        type: 'cotisation'
+        message: `Votre versement de ${montant} FCFA a été enregistré pour votre cotisation de ${cotisation.mois}.`,
+        type: 'versement'
       });
-    } catch (notifErr) { console.error('Erreur notification cotisation:', notifErr.message); }
+      const clientPourPush = await User.findById(cotisation.client);
+      envoyerPush(clientPourPush, 'BIOSAVEUR 💰', `Versement de ${montant} FCFA enregistré !`);
+    } catch (notifErr) { console.error('Erreur notification versement:', notifErr.message); }
     res.status(201).json({ message: 'Cotisation créée', cotisation });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
@@ -218,6 +220,8 @@ router.put('/:id/livrer', auth, async (req, res) => {
         message: `Votre commande de ${cotisationActuelle.mois} a été livrée. Merci pour votre confiance ! Une nouvelle cotisation a été créée pour le mois suivant.`,
         type: 'livraison'
       });
+      const clientPourPush = await User.findById(cotisationActuelle.client);
+      envoyerPush(clientPourPush, 'BIOSAVEUR 🚚', `Votre commande de ${cotisationActuelle.mois} a été livrée !`);
     } catch (notifErr) { console.error('Erreur notification livraison:', notifErr.message); }
     res.json({
       message: 'Livraison confirmée, nouvelle cotisation créée',
