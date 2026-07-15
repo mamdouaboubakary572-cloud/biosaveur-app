@@ -97,6 +97,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:red;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">0</span>
 </button>
 <button onclick="ouvrirModalProfil()" class="btn-qr" style="background:var(--green-light);color:var(--green);">✏️ Modifier</button>
+<button onclick="activerNotificationsPush()" class="btn-qr" id="btn-push" style="background:var(--green-light);color:var(--green);">🔔 Activer</button>
   </div>
 
   <!-- Rappel versement -->
@@ -344,6 +345,45 @@ if (role && role !== 'client') window.location.href = '/dashboard.html';
 function deconnexion() { localStorage.clear(); window.location.href = '/'; }
 function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
 function allerA(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function activerNotificationsPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Les notifications ne sont pas supportées sur cet appareil/navigateur.');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { alert('Vous avez refusé les notifications. Vous pouvez les activer plus tard dans les réglages du navigateur.'); return; }
+
+    const reg = await navigator.serviceWorker.ready;
+    const keyRes = await fetch('/api/auth/vapid-public-key');
+    const { publicKey } = await keyRes.json();
+
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+    await fetch('/api/auth/push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ subscription })
+    });
+
+    document.getElementById('btn-push').textContent = '✅ Activées';
+    alert('🔔 Notifications activées ! Vous recevrez des alertes même l\'application fermée.');
+  } catch (err) {
+    console.error(err);
+    alert('Erreur lors de l\'activation des notifications.');
+  }
+}
 function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); } function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
 
 let monQRCode = '';
