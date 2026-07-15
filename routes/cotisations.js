@@ -4,7 +4,8 @@ const Cotisation = require('../models/Cotisation');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { envoyerSMS } = require('../services/sms');
-const Notification = require('../models/Notification');
+const { envoyerPush } = require('../services/push');
+const Notification = require('../models/Notification'); 
 
 const MAX_LIVRAISONS_PAR_JOUR = 10;
 let derniereVerifRappels = null;
