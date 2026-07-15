@@ -25,3 +25,19 @@ self.addEventListener('fetch', e => {
     fetch(e.request).catch(() => caches.match(e.request))
   );
 });
+
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : { title: 'BIOSAVEUR', body: 'Nouvelle notification' };
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/logo_biosaveur.png',
+      badge: '/logo_biosaveur.png'
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow('/client.html'));
+});
