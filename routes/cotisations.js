@@ -5,7 +5,8 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { envoyerSMS } = require('../services/sms');
 const { envoyerPush } = require('../services/push');
-const Notification = require('../models/Notification'); 
+const { logActivite } = require('../services/activite');
+const Notification = require('../models/Notification');
 
 const MAX_LIVRAISONS_PAR_JOUR = 10;
 let derniereVerifRappels = null;
@@ -74,7 +75,8 @@ router.post('/', auth, async (req, res) => {
       jourLivraisonChoisi,
       reductionAmbassadeur: estAmbassadeur
     });
-    await cotisation.save();
+  await cotisation.save();
+    logActivite(req, 'Cotisation créée', `Cotisation de ${mois} créée pour un client (${montantObjectif} FCFA)`);
     try {
       const client = await User.findById(clientId);
       if (client && client.telephone) {
@@ -122,6 +124,7 @@ router.post('/:id/versement', auth, async (req, res) => {
     cotisation.montantCollecte += montant;
     if (cotisation.montantCollecte >= cotisation.montantObjectif) cotisation.statut = 'complete';
     await cotisation.save();
+    logActivite(req, 'Versement enregistré', `${montant} FCFA (${modePaiement || 'mode non précisé'})`);
     try {
       await cotisation.populate('client', 'nom prenom telephone');
       const cl = cotisation.client;
@@ -168,9 +171,10 @@ router.put('/:id/livrer', auth, async (req, res) => {
       return res.status(400).json({ message: 'Cette cotisation est déjà livrée' });
     }
 
-    cotisationActuelle.statut = 'livre';
+   cotisationActuelle.statut = 'livre';
     cotisationActuelle.dateLivraisonEffective = new Date();
     await cotisationActuelle.save();
+    logActivite(req, 'Livraison confirmée', `Cotisation de ${cotisationActuelle.mois} livrée`);
 
     if (cotisationActuelle.renouvellementAuto === false) {
       return res.json({
@@ -650,6 +654,17 @@ router.get('/avis', auth, async (req, res) => {
       .limit(20);
     const moyenne = cotisations.length ? (cotisations.reduce((s,c) => s + c.note, 0) / cotisations.length).toFixed(1) : 0;
     res.json({ avis: cotisations, moyenne, total: cotisations.length });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
+// Journal d'activité (50 dernières actions)
+router.get('/journal-activite', auth, async (req, res) => {
+  try {
+    const Activite = require('../models/Activite');
+    const activites = await Activite.find().sort({ date: -1 }).limit(50);
+    res.json(activites);
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
   }
