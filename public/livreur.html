@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSAVEUR – Mode Livreur</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--blue:#1565c0;--radius:12px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
@@ -40,9 +41,15 @@ header{background:var(--green);color:white;padding:16px 20px;display:flex;align-
     <div class="n" id="nb-total">0</div>
     <div class="l">Livraisons prévues aujourd'hui</div>
   </div>
+
+  <button class="btn btn-blue" style="width:100%;margin-bottom:16px;" onclick="toggleScanner()" id="btn-scanner">📷 Scanner un QR code client</button>
+  <div id="zone-scanner" style="display:none;margin-bottom:16px;">
+    <div id="qr-reader" style="border-radius:12px;overflow:hidden;"></div>
+  </div>
+  <div id="resultat-scan"></div>
+
   <div id="livraisons-list"><div class="empty">Chargement...</div></div>
 </div>
-
 <script>
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role');
@@ -54,6 +61,7 @@ function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
 async function chargerLivraisonsJour() {
   const res = await fetch('/api/cotisations/livraisons-aujourdhui', { headers: { 'Authorization': 'Bearer ' + token } });
   const data = await res.json();
+  derniereListeLivraisons = data;
   document.getElementById('nb-total').textContent = data.length;
   const div = document.getElementById('livraisons-list');
   if (!data.length) {
@@ -73,6 +81,55 @@ async function chargerLivraisonsJour() {
       (c.statut === 'complete' ? '<button class="btn btn-green" onclick="confirmerLivraison(\'' + c._id + '\')">✓ Confirmer</button>' : '<span style="text-align:center;padding:12px;color:var(--text-muted);font-size:13px;">En attente paiement</span>') +
       '</div></div>';
   }).join('');
+}
+  let scannerActif = null;
+let derniereListeLivraisons = [];
+
+function toggleScanner() {
+  const zone = document.getElementById('zone-scanner');
+  const btn = document.getElementById('btn-scanner');
+  if (zone.style.display === 'none') {
+    zone.style.display = 'block';
+    btn.textContent = '✖ Fermer le scanner';
+    demarrerScanner();
+  } else {
+    zone.style.display = 'none';
+    btn.textContent = '📷 Scanner un QR code client';
+    arreterScanner();
+  }
+}
+
+function demarrerScanner() {
+  scannerActif = new Html5Qrcode('qr-reader');
+  scannerActif.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 220 },
+    (texteDecoded) => {
+      traiterQRScanne(texteDecoded);
+      toggleScanner();
+    },
+    () => {}
+  ).catch(() => {
+    document.getElementById('resultat-scan').innerHTML = '<div class="livraison-card" style="text-align:center;color:var(--text-muted);">❌ Impossible d\'accéder à la caméra. Vérifiez les autorisations de votre navigateur.</div>';
+  });
+}
+
+function arreterScanner() {
+  if (scannerActif) { scannerActif.stop().catch(() => {}); scannerActif = null; }
+}
+
+function traiterQRScanne(texteDecoded) {
+  const match = texteDecoded.match(/id=([a-f0-9]+)/i);
+  if (!match) { document.getElementById('resultat-scan').innerHTML = '<div class="livraison-card">❌ QR code non reconnu</div>'; return; }
+  const clientId = match[1];
+  const trouve = derniereListeLivraisons.find(c => c.client?._id === clientId);
+  if (!trouve) {
+    document.getElementById('resultat-scan').innerHTML = '<div class="livraison-card">⚠️ Ce client n\'a pas de livraison prévue aujourd\'hui.</div>';
+    return;
+  }
+  document.getElementById('carte-' + trouve._id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('carte-' + trouve._id).style.border = '2px solid var(--green)';
+  document.getElementById('resultat-scan').innerHTML = '<div class="livraison-card" style="background:var(--green-light);text-align:center;">✅ Client trouvé : ' + (trouve.client?.nom||'') + ' ' + (trouve.client?.prenom||'') + '</div>';
 }
 
 async function confirmerLivraison(id) {
