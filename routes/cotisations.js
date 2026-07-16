@@ -670,5 +670,30 @@ router.get('/journal-activite', auth, async (req, res) => {
   }
 });
 
+// Clients inactifs (aucune cotisation depuis 60+ jours)
+router.get('/clients-inactifs', auth, async (req, res) => {
+  try {
+    const limiteInactivite = new Date();
+    limiteInactivite.setDate(limiteInactivite.getDate() - 60);
+
+    const tousLesClients = await User.find({ role: 'client' }).select('nom prenom telephone');
+    const resultats = [];
+
+    for (const client of tousLesClients) {
+      const derniereCotisation = await Cotisation.findOne({ client: client._id }).sort({ createdAt: -1 });
+      if (!derniereCotisation || derniereCotisation.createdAt < limiteInactivite) {
+        resultats.push({
+          client,
+          derniereActivite: derniereCotisation ? derniereCotisation.createdAt : null
+        });
+      }
+    }
+
+    res.json(resultats);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
 
