@@ -203,7 +203,8 @@ tr:last-child td{border-bottom:none;}
       <div class="nav-label">Organisation</div>
      <button class="nav-btn" onclick="afficherTab('calendrier')"><span class="icon">📅</span> Calendrier</button>
 <button class="nav-btn" onclick="afficherTab('carte')"><span class="icon">🗺️</span> Carte des zones</button>
-      <button class="nav-btn" onclick="afficherTab('admins')"><span class="icon">🔐</span> Administrateurs</button>
+     <button class="nav-btn" onclick="afficherTab('admins')"><span class="icon">🔐</span> Administrateurs</button>
+      <button class="nav-btn" onclick="afficherTab('journal')"><span class="icon">📜</span> Journal d'activité</button>
     </div>
   </nav>
 
@@ -641,6 +642,19 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
+    <!-- ===== JOURNAL D'ACTIVITÉ ===== -->
+    <div class="section" id="section-journal">
+      <div class="section-header">
+        <div class="section-title">📜 Journal d'activité</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Détails</th></tr></thead>
+          <tbody id="journal-table"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ===== ADMINS ===== -->
     <div class="section" id="section-admins">
       <div class="section-header">
@@ -731,9 +745,10 @@ function afficherTab(tab) {
   if (tab === 'admins') chargerAdmins();
  if (tab === 'paiements') chargerPaiements();
   if (tab === 'carte') chargerCarte();
-  if (tab === 'historique') chargerHistorique();
+ if (tab === 'historique') chargerHistorique();
+  if (tab === 'journal') chargerJournal();
 }
-
+  
 // ─── DASHBOARD ─────────────────────────────────────────
 let chartCollecte, chartStatut, chartEvol;
 async function chargerDashboard() {
@@ -1346,6 +1361,16 @@ async function envoyerSMSBroadcast() {
   if (!message.trim()) { alert('Rédigez un message'); return; }
   if (!confirm('Envoyer ce SMS à tous les clients sélectionnés ?')) return;
   alert('✅ SMS envoyé ! (connectez votre provider SMS dans app.js)');
+}
+
+  // ─── JOURNAL D'ACTIVITÉ ─────────────────────────────────
+async function chargerJournal() {
+  const res = await fetch('/api/cotisations/journal-activite', { headers:{'Authorization':'Bearer '+token} });
+  const data = await res.json();
+  document.getElementById('journal-table').innerHTML = data.length ? data.map(a =>
+    '<tr><td>' + formatDateHeure(a.date) + '</td><td>' + (a.adminNom||'Admin') + '</td>' +
+    '<td><span class="badge badge-blue">' + a.action + '</span></td><td>' + (a.details||'') + '</td></tr>'
+  ).join('') : '<tr><td colspan="4" class="empty">Aucune activité enregistrée</td></tr>';
 }
 
 // ─── ADMINS ────────────────────────────────────────────
