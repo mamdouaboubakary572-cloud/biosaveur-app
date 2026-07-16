@@ -205,6 +205,7 @@ tr:last-child td{border-bottom:none;}
 <button class="nav-btn" onclick="afficherTab('carte')"><span class="icon">🗺️</span> Carte des zones</button>
      <button class="nav-btn" onclick="afficherTab('admins')"><span class="icon">🔐</span> Administrateurs</button>
       <button class="nav-btn" onclick="afficherTab('journal')"><span class="icon">📜</span> Journal d'activité</button>
+      <button class="nav-btn" onclick="telechargerSauvegarde()"><span class="icon">💾</span> Sauvegarde</button>
     </div>
   </nav>
 
@@ -1361,6 +1362,19 @@ async function envoyerSMSBroadcast() {
   if (!message.trim()) { alert('Rédigez un message'); return; }
   if (!confirm('Envoyer ce SMS à tous les clients sélectionnés ?')) return;
   alert('✅ SMS envoyé ! (connectez votre provider SMS dans app.js)');
+}
+
+  // ─── SAUVEGARDE ─────────────────────────────────────────
+async function telechargerSauvegarde() {
+  if (!confirm('Télécharger une sauvegarde complète de vos données (clients + cotisations) ?')) return;
+  const res = await fetch('/api/admin/sauvegarde-complete', { headers:{'Authorization':'Bearer '+token} });
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sauvegarde_biosaveur_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  alert('✅ Sauvegarde téléchargée : ' + data.nbClients + ' clients, ' + data.nbCotisations + ' cotisations.');
 }
 
   // ─── JOURNAL D'ACTIVITÉ ─────────────────────────────────
