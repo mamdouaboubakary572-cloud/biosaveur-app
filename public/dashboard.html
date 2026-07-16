@@ -1652,7 +1652,7 @@ function afficherHistoriqueDetaille(cotisations) {
   document.getElementById('h-historique-table').innerHTML = cotisations.map(c =>
     '<tr><td><strong>' + (c.client?.nom || '?') + ' ' + (c.client?.prenom || '') + '</strong></td>' +
     '<td>' + c.mois + '</td>' +
-    '<td>' + c.objectifPoulets + ' 🐔</td>' +
+    '<td>' + (c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join('<br>') : (c.objectifPoulets||0) + ' 🐔') + '</td>' +
     '<td>' + nbFCFA(c.montantCollecte) + ' FCFA</td>' +
     '<td>' + (c.dateLivraisonEffective ? new Date(c.dateLivraisonEffective).toLocaleDateString('fr-FR') : '–') + '</td></tr>'
   ).join('') || '<tr><td colspan="5" class="empty">Aucune livraison enregistrée</td></tr>';
