@@ -191,7 +191,8 @@ tr:last-child td{border-bottom:none;}
       <button class="nav-btn" onclick="afficherTab('cotisations')"><span class="icon">🐔</span> Cotisations</button>
       <button class="nav-btn" onclick="afficherTab('livraisons')"><span class="icon">🚚</span> Livraisons</button>
       <button class="nav-btn" onclick="afficherTab('paiements')"><span class="icon">💰</span> Paiements</button>
-      <button class="nav-btn" onclick="afficherTab('historique')"><span class="icon">📦</span> Historique</button>
+     <button class="nav-btn" onclick="afficherTab('historique')"><span class="icon">📦</span> Historique</button>
+      <button class="nav-btn" onclick="afficherTab('inactifs')"><span class="icon">😴</span> Clients inactifs</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Communication</div>
@@ -513,6 +514,19 @@ tr:last-child td{border-bottom:none;}
         </table>
       </div>
     </div>
+    <!-- ===== CLIENTS INACTIFS ===== -->
+    <div class="section" id="section-inactifs">
+      <div class="section-header">
+        <div class="section-title">😴 Clients inactifs (60+ jours)</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Téléphone</th><th>Dernière activité</th><th>Action</th></tr></thead>
+          <tbody id="inactifs-table"></tbody>
+        </table>
+      </div>
+    </div>
+    
     <!-- ===== HISTORIQUE ===== -->
 <div class="section" id="section-historique">
   <div class="stats-grid">
@@ -746,7 +760,8 @@ function afficherTab(tab) {
   if (tab === 'admins') chargerAdmins();
  if (tab === 'paiements') chargerPaiements();
   if (tab === 'carte') chargerCarte();
- if (tab === 'historique') chargerHistorique();
+if (tab === 'historique') chargerHistorique();
+  if (tab === 'inactifs') chargerClientsInactifs();
   if (tab === 'journal') chargerJournal();
 }
   
@@ -1362,6 +1377,20 @@ async function envoyerSMSBroadcast() {
   if (!message.trim()) { alert('Rédigez un message'); return; }
   if (!confirm('Envoyer ce SMS à tous les clients sélectionnés ?')) return;
   alert('✅ SMS envoyé ! (connectez votre provider SMS dans app.js)');
+}
+  
+// ─── CLIENTS INACTIFS ───────────────────────────────────
+async function chargerClientsInactifs() {
+  const res = await fetch('/api/cotisations/clients-inactifs', { headers:{'Authorization':'Bearer '+token} });
+  const data = await res.json();
+  const tbody = document.getElementById('inactifs-table');
+  tbody.innerHTML = data.length ? data.map(item => {
+    const msg = 'Bonjour ' + (item.client?.nom||'') + ', ça fait longtemps qu\'on ne vous a pas vu chez BIOSAVEUR 🐔 ! Vos poulets frais vous attendent. Une question, un besoin ? Nous sommes là pour vous.';
+    return '<tr><td><strong>' + (item.client?.nom||'?') + ' ' + (item.client?.prenom||'') + '</strong></td>' +
+    '<td>' + (item.client?.telephone||'') + '</td>' +
+    '<td>' + (item.derniereActivite ? formatDate(item.derniereActivite) : 'Jamais commandé') + '</td>' +
+    '<td><button class="btn btn-green btn-sm" onclick="ouvrirWhatsApp(\'' + (item.client?.telephone||'') + '\', \'' + msg.replace(/'/g,"\\'") + '\')">💬 Relancer</button></td></tr>';
+  }).join('') : '<tr><td colspan="4" class="empty">Aucun client inactif 🎉</td></tr>';
 }
 
   // ─── SAUVEGARDE ─────────────────────────────────────────
