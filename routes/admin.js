@@ -86,5 +86,23 @@ router.put('/clients/:id/reinitialiser-mdp', auth, async (req, res) => {
   }
 });
 
+// Export complet de sauvegarde (clients + cotisations)
+router.get('/sauvegarde-complete', auth, async (req, res) => {
+  try {
+    const Cotisation = require('../models/Cotisation');
+    const clients = await User.find({ role: 'client' }).select('-motDePasse');
+    const cotisations = await Cotisation.find();
+    res.json({
+      dateExport: new Date(),
+      nbClients: clients.length,
+      nbCotisations: cotisations.length,
+      clients,
+      cotisations
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', erreur: err.message });
+  }
+});
+
 module.exports = router;
  
