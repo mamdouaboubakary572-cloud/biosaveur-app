@@ -137,14 +137,23 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   <button onclick="creerNouvelleCotisation()" class="btn-green">✓ Créer ma cotisation</button>
 </div>
 
-  <!-- Paiement -->
+<!-- Paiement -->
   <div class="section-card">
     <div class="section-title">💳 Effectuer un paiement</div>
+
+    <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--green);">⚡ Paiement rapide et automatique</div>
+      <select id="cotisation-a-payer" class="form-input" style="margin-bottom:8px;">
+        <option value="">-- Choisir une cotisation --</option>
+      </select>
+      <button onclick="payerAvecCinetPay()" class="btn-green">💳 Payer maintenant</button>
+    </div>
+
     <div style="background:#e8f5ee;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a6b3c;">
-      <strong>📌 Comment payer :</strong><br>
+      <strong>📌 Ou payez manuellement :</strong><br>
       1. Cliquez sur votre mode de paiement<br>
       2. Effectuez le transfert vers <strong>0769476546</strong><br>
-      3. Saisissez la référence et le montant ci-dessous
+      3. Saisissez la référence et le montant dans votre cotisation
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <a href="https://pay.wave.com/m/0769476546" target="_blank" class="pay-btn" style="background:#1DC4FF;">
@@ -157,7 +166,6 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
         💵 Espèces — Appeler BIOSAVEUR<br><small style="font-weight:400;font-size:11px;">0769476546</small>
       </a>
     </div>
-   
   </div>
   
 <!-- Historique -->
@@ -623,6 +631,8 @@ async function chargerCotisations() {
       }).join(''); 
     }
 
+   remplirSelectPaiement();
+
     // Versements
     const versements = [];
     mesCotisations.forEach(c => (c.versements||[]).forEach(v => versements.push({...v, mois:c.mois})));
@@ -674,6 +684,36 @@ async function envoyerAvis(cotisationId) {
   const data = await res.json();
   if (res.ok) {
     document.getElementById('toggle-' + cotisationId).style.background = data.renouvellementAuto ? 'var(--green)' : 'var(--border)';
+  }
+}
+
+  function remplirSelectPaiement() {
+  const select = document.getElementById('cotisation-a-payer');
+  if (!select) return;
+  const enCours = mesCotisations.filter(c => c.statut === 'en_cours');
+  select.innerHTML = '<option value="">-- Choisir une cotisation --</option>' +
+    enCours.map(c => {
+      const reste = Math.max(0, (c.montantObjectif||0) - (c.montantCollecte||0));
+      return '<option value="' + c._id + '">' + c.mois + ' — Reste ' + nbFCFA(reste) + ' FCFA</option>';
+    }).join('');
+}
+
+async function payerAvecCinetPay() {
+  const cotisationId = document.getElementById('cotisation-a-payer').value;
+  if (!cotisationId) { alert('Choisissez une cotisation à payer'); return; }
+  try {
+    const res = await fetch('/api/cinetpay/initier/' + cotisationId, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (res.ok && data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+    } else {
+      alert('Erreur : ' + (data.message || 'Impossible de générer le lien de paiement'));
+    }
+  } catch (err) {
+    alert('Erreur de connexion. Réessayez.');
   }
 }
 
