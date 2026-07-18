@@ -47,8 +47,9 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
     });
 
     res.json({ paymentUrl: response.data.payment_url || response.data.data?.payment_url });
-  } catch (err) {
-    console.error('Erreur CinetPay:', err.response?.data || err.message);
+ } catch (err) {
+    console.error('Erreur CinetPay COMPLETE:', JSON.stringify(err.response?.data, null, 2) || err.message);
+    console.error('Status HTTP:', err.response?.status);
     res.status(500).json({ message: 'Erreur lors de l\'initialisation du paiement', erreur: err.response?.data || err.message });
   }
 });
