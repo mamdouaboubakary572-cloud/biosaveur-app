@@ -23,7 +23,9 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
     if (reste <= 0) return res.status(400).json({ message: 'Cette cotisation est déjà soldée' });
 
     const token = await obtenirTokenCinetPay();
-    const transactionId = 'BSV-' + cotisation._id.toString().slice(-8) + '-' + Date.now();
+    // On encode l'ID de la cotisation directement dans le transaction_id pour le retrouver au webhook
+    const transactionId = cotisation._id.toString() + '-' + Date.now();
+    const emailClient = (cotisation.client?.telephone || 'client') + '@biosaveur-app.com';
 
     const response = await axios.post('https://api.cinetpay.net/v1/payment', {
       currency: 'XOF',
@@ -31,14 +33,15 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
       amount: reste,
       lang: 'fr',
       designation: 'Cotisation BIOSAVEUR ' + cotisation.mois,
+      client_email: emailClient,
       client_first_name: cotisation.client?.prenom || 'Client',
       client_last_name: cotisation.client?.nom || '',
-      client_phone: cotisation.client?.telephone || '',
+      client_phone_number: cotisation.client?.telephone || '',
       success_url: process.env.APP_URL + '/client.html',
       failed_url: process.env.APP_URL + '/client.html',
       notify_url: process.env.APP_URL + '/api/cinetpay/notify',
       channel: 'ALL',
-      metadata: cotisation._id.toString()
+      direct_pay: false
     }, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
@@ -54,8 +57,11 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
 router.post('/notify', async (req, res) => {
   try {
     const data = req.body;
-    const cotisationId = data.metadata;
-    if (!cotisationId) return res.status(400).send('Requête invalide');
+    const transactionId = data.merchant_transaction_id || data.transaction_id;
+    if (!transactionId) return res.status(400).send('Requête invalide');
+
+    // On récupère l'ID de la cotisation à partir du transaction_id (format: {cotisationId}-{timestamp})
+    const cotisationId = transactionId.split('-')[0];
 
     if (data.status === 'ACCEPTED' || data.status === 'success') {
       const cotisation = await Cotisation.findById(cotisationId);
@@ -63,7 +69,7 @@ router.post('/notify', async (req, res) => {
         cotisation.versements.push({
           montant: parseInt(data.amount),
           modePaiement: data.payment_method || 'CinetPay',
-          reference: data.transaction_id || data.merchant_transaction_id,
+          reference: transactionId,
           date: new Date()
         });
         cotisation.montantCollecte += parseInt(data.amount);
