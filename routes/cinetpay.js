@@ -6,13 +6,14 @@ const Cotisation = require('../models/Cotisation');
 const Notification = require('../models/Notification');
 
 async function obtenirTokenCinetPay() {
+  console.log('DEBUG - Longueur API_KEY:', (process.env.CINETPAY_API_KEY || '').length);
+  console.log('DEBUG - Longueur API_PASSWORD:', (process.env.CINETPAY_API_PASSWORD || '').length);
   const res = await axios.post('https://api.cinetpay.net/v1/oauth/login', {
     api_key: process.env.CINETPAY_API_KEY,
     api_password: process.env.CINETPAY_API_PASSWORD
   });
   return res.data.access_token;
 }
-
 // Initier un paiement pour une cotisation
 router.post('/initier/:cotisationId', auth, async (req, res) => {
   try {
