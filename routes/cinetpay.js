@@ -36,11 +36,10 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
       client_email: emailClient,
       client_first_name: cotisation.client?.prenom || 'Client',
       client_last_name: cotisation.client?.nom || '',
-      client_phone_number: cotisation.client?.telephone || '',
       success_url: process.env.APP_URL + '/client.html',
       failed_url: process.env.APP_URL + '/client.html',
       notify_url: process.env.APP_URL + '/api/cinetpay/notify',
-      channel: 'ALL',
+      channel: 'PUSH',
       direct_pay: false
     }, {
       headers: { 'Authorization': 'Bearer ' + token }
