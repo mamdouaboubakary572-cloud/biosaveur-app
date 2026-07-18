@@ -49,6 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/cotisations', require('./routes/cotisations'));
+app.use('/api/cinetpay', require('./routes/cinetpay'));
 app.use('/api/commandes', require('./routes/commandes'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
