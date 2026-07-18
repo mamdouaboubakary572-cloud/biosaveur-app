@@ -22,7 +22,14 @@ router.post('/initier/:cotisationId', auth, async (req, res) => {
     const reste = (cotisation.montantObjectif || 0) - (cotisation.montantCollecte || 0);
     if (reste <= 0) return res.status(400).json({ message: 'Cette cotisation est déjà soldée' });
 
-    const token = await obtenirTokenCinetPay();
+    let token;
+    try {
+      token = await obtenirTokenCinetPay();
+      console.log('✅ Token CinetPay obtenu avec succès');
+    } catch (errLogin) {
+      console.error('❌ ERREUR AU LOGIN CinetPay:', JSON.stringify(errLogin.response?.data));
+      return res.status(500).json({ message: 'Erreur de connexion à CinetPay (login)', erreur: errLogin.response?.data });
+    }
     // On encode l'ID de la cotisation directement dans le transaction_id pour le retrouver au webhook
     const transactionId = cotisation._id.toString() + '-' + Date.now();
     const emailClient = (cotisation.client?.telephone || 'client') + '@biosaveur-app.com';
