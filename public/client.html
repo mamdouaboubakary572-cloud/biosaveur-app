@@ -1031,6 +1031,85 @@ async function envoyerMessage() {
   if (res.ok) { document.getElementById('msg-contenu').value = ''; alert('✅ Message envoyé !'); chargerMessages(); }
 }
 
+  async function genererRecuVersement(versement) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const vert = [26, 107, 60];
+  const w = 210;
+  const fmt = n => Number(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+  const logoBase64 = await new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/logo_biosaveur.png';
+  });
+
+  doc.setFillColor(...vert);
+  doc.rect(0, 0, w, 35, 'F');
+  if (logoBase64) doc.addImage(logoBase64, 'PNG', 14, 7, 22, 22);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BIOSAVEUR', logoBase64 ? 40 : 14, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Reçu de versement', logoBase64 ? 40 : 14, 23);
+
+  let y = 55;
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('REÇU DE PAIEMENT', w/2, y, { align: 'center' });
+  y += 20;
+
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  const nomClient = document.getElementById('profile-nom').textContent;
+  const lignes = [
+    ['Client', nomClient],
+    ['Mois de cotisation', versement.mois || '-'],
+    ['Montant versé', fmt(versement.montant) + ' FCFA'],
+    ['Mode de paiement', versement.modePaiement || '-'],
+    ['Référence', versement.reference || '-'],
+    ['Date', versement.date ? new Date(versement.date).toLocaleDateString('fr-FR') + ' à ' + new Date(versement.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '-']
+  ];
+  lignes.forEach(([label, val]) => {
+    doc.setFont('helvetica', 'normal');
+    doc.text(label + ' :', 20, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(val), 90, y);
+    y += 10;
+  });
+
+  y += 20;
+  doc.setDrawColor(...vert);
+  doc.line(20, y, w-20, y);
+  y += 10;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(100,100,100);
+  doc.text('Ce reçu confirme la réception de votre versement. Merci pour votre confiance.', w/2, y, { align: 'center' });
+
+  doc.setFillColor(...vert);
+  doc.rect(0, 268, w, 29, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7);
+  doc.text('AGRO VIVDURABLE SARL au capital de 1 000 000 FCFA - RCCM : CI-ABJ-03-2026-B12-02100 - IDU : CI-2026-0058857 H', w / 2, 275, { align: 'center' });
+  doc.text('Siege social : Abidjan, N\'dotre, non loin du marche de Sotraprim, quartier lot 3141, ilot 283, 01 BPM 6123 Abidjan 01', w / 2, 281, { align: 'center' });
+  doc.text('biosaveur48@gmail.com - Tel : 0757227998 / 0565454444', w / 2, 287, { align: 'center' });
+
+  doc.save('Recu_BIOSAVEUR_' + (versement.mois||'').replace(' ','_') + '.pdf');
+}
+
 function afficherQR() {
   document.getElementById('qr-content').innerHTML = monQRCode
     ? `<img src="${monQRCode}" style="max-width:200px;border-radius:8px;">`
