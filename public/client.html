@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSAVEUR – Mon Espace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1a6b3c">
 <style>
@@ -639,8 +640,10 @@ async function chargerCotisations() {
     versements.sort((a,b) => new Date(b.date)-new Date(a.date));
     const vDiv = document.getElementById('versements-list');
     if (!versements.length) vDiv.innerHTML = '<div class="empty">Aucun versement enregistré</div>';
-    else vDiv.innerHTML = versements.map(v =>
-      `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div><div class="v-date">${v.date?formatDateHeure(v.date):'–'}</div></div>`
+    else vDiv.innerHTML = versements.map((v,i) =>
+      `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div>
+      <div style="text-align:right;"><div class="v-date">${v.date?formatDateHeure(v.date):'–'}</div>
+      <button onclick='genererRecuVersement(${JSON.stringify(v).replace(/'/g,"&apos;")})' style="margin-top:4px;background:var(--green-light);color:var(--green);border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;">📄 Reçu</button></div></div>`
     ).join('');
 
 
