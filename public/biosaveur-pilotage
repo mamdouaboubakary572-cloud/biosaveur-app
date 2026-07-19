@@ -1,0 +1,61 @@
+# BIOSAVEUR Pilotage
+
+Application interne de gestion pour BIOSAVEUR — séparée du portail client existant.
+Destinée à toi + ton équipe (2-3 comptes au démarrage).
+
+## Modules prévus
+
+| # | Module | Statut |
+|---|--------|--------|
+| 1 | Tableau de bord | À faire |
+| 2 | **Trésorerie** | ✅ Fait (ce lot) |
+| 3 | Comptabilité (recettes/dépenses) | À faire |
+| 4 | Commandes | À faire |
+| 5 | Clients | À faire |
+| 6 | Stock / Inventaire | À faire |
+| 7 | Prospection | À faire |
+| 8 | Devis | À faire |
+| 9 | Calculateur de prix (poulet + produits transformés) | À faire |
+
+## Structure
+
+```
+biosaveur-pilotage/
+├── config/db.js          → connexion MongoDB
+├── models/
+│   ├── User.js            → utilisateurs, rôles (admin/manager/employe), accès par module
+│   └── Tresorerie.js       → saisie mensuelle, totaux calculés automatiquement
+├── middleware/auth.js      → JWT + contrôle d'accès par module
+├── routes/
+│   ├── auth.js             → login, création de comptes équipe
+│   └── tresorerie.js       → CRUD trésorerie
+├── server.js
+├── package.json
+└── .env.example
+```
+
+## Gestion des accès
+
+- `role: admin` → accès total, tous les modules.
+- `role: manager` / `role: employe` → accès limité aux modules listés dans `user.modules`
+  (ex: `["tresorerie", "stock"]`).
+- Chaque route de module est protégée par `requireModule('nom_du_module')`.
+
+## Démarrage (local ou Render)
+
+1. `npm install`
+2. Copier `.env.example` en `.env` et renseigner `MONGODB_URI` + `JWT_SECRET`
+3. `npm run dev` (local) ou déploiement Render classique comme pour l'appli BIOSAVEUR
+
+## Créer le premier compte admin
+
+Aucune route d'inscription publique par sécurité. Le premier compte admin se crée
+directement en base (MongoDB Atlas) ou via un script one-shot — à faire ensemble
+au moment du déploiement.
+
+## Logique trésorerie
+
+- `soldeInitial` d'un mois = `soldeFinal` du mois précédent, calculé automatiquement
+  si non fourni à la création.
+- `totalEncaissements`, `totalDecaissements`, `soldeNetMois`, `soldeFinal` sont des
+  virtuals Mongoose — jamais stockés en dur, toujours recalculés à la lecture.
