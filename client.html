@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIOSAVEUR – Mon Espace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a6b3c">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0;box-shadow:0 -2px 8px rgba(0,0,0,0.08);z-index:200;}
+.bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--text-muted);cursor:pointer;padding:4px 8px;}
+.bottom-nav button .nav-icon{font-size:20px;}
+:root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;--red:#c0392b;--red-light:#fdecea;--blue:#1565c0;--blue-light:#e3eefa;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding-bottom:64px;}
+header{background:var(--green);color:white;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:16px;font-weight:700;}
+.logo span{color:#a8d5b5;font-weight:400;font-size:12px;margin-left:6px;}
+.user-name{font-size:12px;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:99px;}
+.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;}
+.main{max-width:700px;margin:0 auto;padding:20px 16px;}
+.profile-card{background:var(--surface);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;align-items:center;gap:16px;}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--green);color:white;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;}
+.profile-info h2{font-size:16px;font-weight:700;}
+.profile-info p{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.qr-btn{margin-left:auto;background:var(--green-light);border:1px solid #b8ddc5;color:var(--green);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center;}
+.stat-card .s-value{font-size:22px;font-weight:700;color:var(--green);}
+.stat-card .s-label{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+.section-title{font-size:14px;font-weight:600;margin-bottom:14px;}
+.cotisation-item{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+.cot-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cot-title{font-weight:600;font-size:14px;}
+.badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-light);color:var(--green);}
+.badge-blue{background:var(--blue-light);color:var(--blue);}
+.badge-amber{background:#fff3e0;color:#e65100;}
+.progress-bar{background:#e0e8e2;border-radius:99px;height:8px;overflow:hidden;margin:8px 0;}
+.progress-fill{height:100%;border-radius:99px;background:var(--green);}
+.cot-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);}
+.timeline{display:flex;align-items:center;margin:12px 0;}
+.timeline-step{flex:1;text-align:center;position:relative;}
+.timeline-step .dot{width:20px;height:20px;border-radius:50%;background:var(--border);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;margin:0 auto 4px;font-weight:700;position:relative;z-index:2;}
+.timeline-step.done .dot{background:var(--green);}
+.timeline-step .label{font-size:9px;color:var(--text-light);}
+.timeline-step.done .label{color:var(--green);font-weight:600;}
+.timeline-line{position:absolute;top:10px;left:-50%;width:100%;height:2px;background:var(--border);z-index:1;}
+.timeline-step.done .timeline-line{background:var(--green);}
+.timeline-step:first-child .timeline-line{display:none;}
+.versement-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.versement-item:last-child{border-bottom:none;}
+.v-montant{font-weight:700;color:var(--green);font-size:14px;}
+.v-mode{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.v-date{font-size:11px;color:var(--text-light);}
+.pay-btn{display:block;text-decoration:none;border-radius:10px;padding:14px;text-align:center;font-weight:700;font-size:13px;color:white;margin-bottom:10px;}
+.form-input{width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;outline:none;font-family:inherit;}
+.form-input:focus{border-color:var(--green);}
+.btn-green{background:var(--green);color:white;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;width:100%;}
+.msg-item{padding:10px;background:#f8fbf9;border-radius:8px;margin-bottom:8px;border-left:3px solid var(--green);}
+.msg-date{font-size:11px;color:var(--text-light);margin-top:4px;}
+.msg-reply{margin-top:8px;background:var(--green-light);border-radius:6px;padding:8px;font-size:12px;color:var(--green);}
+#modal-qr{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-qr.show{display:flex;}
+#modal-profil{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-notifs{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center;}
+#modal-notifs.show{display:flex;}
+#modal-profil.show{display:flex;}
+.modal-inner{background:white;padding:28px;border-radius:14px;text-align:center;max-width:300px;width:90%;}
+.modal-inner h4{margin-bottom:14px;color:var(--green);}
+.modal-close{margin-top:16px;background:var(--red-light);color:var(--red);border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;}
+.empty{text-align:center;padding:30px;color:var(--text-light);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><img src="/logo_biosaveur.png" alt="Biosaveur" style="height:34px;width:auto;vertical-align:middle;margin-right:8px;"> BIOSAVEUR <span>Mon Espace</span></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="user-name" id="user-name">Client</span>
+    <button class="btn-logout" onclick="deconnexion()">Déconnexion</button>
+  </div>
+</header>
+<div class="main">
+
+ <!-- Profil -->
+  <div class="profile-card">
+    <div class="avatar" id="avatar">?</div>
+    <div class="profile-info">
+      <h2 id="profile-nom">Chargement...</h2>
+      <p id="profile-tel">–</p>
+      <div id="badge-fidelite" style="margin-top:4px;"></div>
+    </div>
+    <button onclick="afficherQR()" class="btn-qr">🔲 Mon QR</button>
+<button onclick="ouvrirNotifications()" class="btn-qr" style="position:relative;background:var(--green-light);color:var(--green);">
+  🔔
+  <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:red;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">0</span>
+</button>
+<button onclick="ouvrirModalProfil()" class="btn-qr" style="background:var(--green-light);color:var(--green);">✏️ Modifier</button>
+<button onclick="activerNotificationsPush()" class="btn-qr" id="btn-push" style="background:var(--green-light);color:var(--green);">🔔 Activer</button>
+  </div>
+
+  <!-- Rappel versement -->
+  <div id="rappel-versement" style="display:none;background:linear-gradient(135deg,#fff3e0,#ffe0b2);border-radius:12px;padding:14px 16px;margin-bottom:16px;border-left:4px solid var(--gold);"></div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="s-value" id="stat-poulets">0</div><div class="s-label">🐔 Poulets visés</div></div>
+    <div class="stat-card"><div class="s-value" id="stat-collecte" style="color:var(--gold)">0</div><div class="s-label">💰 FCFA versés</div></div>
+    <div class="stat-card"><div class="s-value" id="stat-progression">0%</div><div class="s-label">📊 Progression</div></div>
+  </div>
+
+  <!-- Cotisations -->
+ <div class="section-card" id="nav-cotisations">
+    <div class="section-title">🐔 Mes Cotisations</div>
+    <div id="cotisations-list"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- Versements -->
+  <div class="section-card">
+    <div class="section-title">💰 Mes Versements</div>
+    <div id="versements-list"><div class="empty">Chargement...</div></div>
+  </div>
+  
+  <!-- Nouvelle cotisation -->
+<div class="section-card">
+  <div class="section-title">🛒 Créer une nouvelle cotisation</div>
+  <select id="new-cot-mois" class="form-input">
+    <option value="">-- Choisir le mois --</option>
+  </select>
+  <div style="border:1px dashed var(--green);border-radius:8px;padding:12px;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🧮 Calculateur de portions</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <input type="number" id="calc-nb-personnes" class="form-input" style="margin-bottom:0;" placeholder="Nombre de personnes" min="1">
+      <select id="calc-occasion" class="form-input" style="margin-bottom:0;">
+        <option value="normal">Repas simple</option>
+        <option value="evenement">Événement / fête</option>
+      </select>
+    </div>
+    <button type="button" class="btn-green" style="width:auto;padding:8px 14px;font-size:12px;" onclick="calculerPortions()">Calculer</button>
+    <div id="calc-resultat" style="margin-top:8px;font-size:13px;color:var(--text-muted);"></div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Articles du panier</div>
+    <div id="new-panier-lignes"></div>
+    <button type="button" class="btn-green" style="width:auto;padding:8px 14px;font-size:12px;margin-top:6px;" onclick="ajouterLignePanierClient()">+ Ajouter un article</button>
+    <div style="margin-top:10px;font-weight:700;font-size:15px;color:var(--green);">Total : <span id="new-panier-total">0</span> FCFA</div>
+  </div>
+  <button onclick="creerNouvelleCotisation()" class="btn-green">✓ Créer ma cotisation</button>
+</div>
+
+<!-- Paiement -->
+  <div class="section-card">
+    <div class="section-title">💳 Effectuer un paiement</div>
+
+    <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--green);">⚡ Paiement rapide et automatique</div>
+      <select id="cotisation-a-payer" class="form-input" style="margin-bottom:8px;">
+        <option value="">-- Choisir une cotisation --</option>
+      </select>
+      <button onclick="payerAvecCinetPay()" class="btn-green">💳 Payer maintenant</button>
+    </div>
+
+    <div style="background:#e8f5ee;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a6b3c;">
+      <strong>📌 Ou payez manuellement :</strong><br>
+      1. Cliquez sur votre mode de paiement<br>
+      2. Effectuez le transfert vers <strong>0769476546</strong><br>
+      3. Saisissez la référence et le montant dans votre cotisation
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <a href="https://pay.wave.com/m/0769476546" target="_blank" class="pay-btn" style="background:#1DC4FF;">
+        📱 Wave<br><small style="font-weight:400;font-size:11px;">0769476546</small>
+      </a>
+      <a href="tel:*144*1*0769476546#" class="pay-btn" style="background:#FF6600;">
+        📱 Orange Money<br><small style="font-weight:400;font-size:11px;">0769476546</small>
+      </a>
+      <a href="tel:0769476546" class="pay-btn" style="background:#1a6b3c;grid-column:1/-1;">
+        💵 Espèces — Appeler BIOSAVEUR<br><small style="font-weight:400;font-size:11px;">0769476546</small>
+      </a>
+    </div>
+  </div>
+  
+<!-- Historique -->
+<div class="section-card">
+  <div class="section-title">📦 Mon Historique</div>
+  <div class="stats-grid" style="margin-bottom:14px;">
+    <div class="stat-card"><div class="s-value" id="hist-total-livre" style="color:var(--gold)">0</div><div class="s-label">💰 FCFA livrés</div></div>
+    <div class="stat-card"><div class="s-value" id="hist-nb-livraisons">0</div><div class="s-label">📦 Livraisons</div></div>
+    <div class="stat-card"><div class="s-value" id="hist-frequence" style="color:var(--blue)">–</div><div class="s-label">🔄 Fréquence</div></div>
+  </div>
+  <div id="historique-list"><div class="empty">Chargement...</div></div>
+</div>
+  
+  <!-- Parrainage -->
+<div class="section-card" id="nav-parrainage">
+  <div class="section-title">🤝 Mon Parrainage</div>
+  
+  <!-- Code de parrainage -->
+  <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Mon code de parrainage</div>
+    <div id="mon-code-parrainage" style="font-size:22px;font-weight:700;color:var(--green);letter-spacing:2px;">–</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+  <button onclick="copierCode()" style="background:var(--green);color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📋 Copier</button>
+  <button onclick="partagerParrainage()" style="background:#25D366;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">📤 Partager</button>
+</div>
+  </div>
+
+  <!-- Points -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="stat-card" style="padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:700;color:var(--gold);" id="mes-points">0</div>
+      <div style="font-size:11px;color:var(--text-muted);">⭐ Points fidélité</div>
+    </div>
+    <div class="stat-card" style="padding:10px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--green);" id="points-fcfa">0 FCFA</div>
+      <div style="font-size:11px;color:var(--text-muted);">💰 Valeur en FCFA</div>
+    </div>
+  </div>
+
+<!-- Info conversion -->
+  <div style="background:#fff8e1;border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:#7c5a00;">
+    💡 <strong>1 000 points = 700 FCFA</strong> de réduction sur votre prochaine cotisation.<br>
+    Gagnez <strong>500 points</strong> par filleul inscrit + <strong>200 points</strong> à son premier versement.
+  </div>
+
+  <!-- Simulateur -->
+  <div style="background:var(--green-light);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">🎯 Simulez vos gains</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;">Nombre d'amis à parrainer :</span>
+      <input type="range" id="sim-filleuls" min="0" max="20" value="3" oninput="simulerPoints()" style="flex:1;">
+      <span id="sim-filleuls-val" style="font-weight:700;color:var(--green);min-width:20px;">3</span>
+    </div>
+    <div style="background:white;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:11px;color:var(--text-muted);">Points estimés (si tous versent)</div>
+      <div id="sim-points" style="font-size:24px;font-weight:700;color:var(--gold);">3 500 pts</div>
+      <div id="sim-fcfa" style="font-size:13px;color:var(--green);font-weight:600;">≈ 9 800 FCFA de réduction</div>
+    </div>
+  </div>
+
+  <!-- Liste des filleuls -->
+  <div style="font-size:13px;font-weight:600;margin-bottom:8px;">👥 Mes filleuls (<span id="nb-filleuls">0</span>)</div>
+  <div id="liste-filleuls"><div class="empty">Aucun filleul pour le moment</div></div>
+
+  <!-- Classement -->
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🏆 Top Parrains BIOSAVEUR</div>
+    <div id="classement-parrains"><div class="empty">Chargement...</div></div>
+  </div>
+</div>
+  
+  <!-- Messages -->
+ <div class="section-card" id="nav-messages">
+    <div class="section-title">💬 Contacter BIOSAVEUR</div>
+    <div>
+      <textarea id="msg-contenu" placeholder="Écrivez votre message ici..." class="form-input" style="min-height:80px;resize:vertical;"></textarea>
+      <button onclick="envoyerMessage()" class="btn-green">📤 Envoyer</button>
+    </div>
+    <div id="messages-list" style="margin-top:14px;"></div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <button onclick="allerA('nav-profil')"><span class="nav-icon">👤</span>Profil</button>
+  <button onclick="allerA('nav-cotisations')"><span class="nav-icon">🐔</span>Cotisations</button>
+  <button onclick="allerA('nav-parrainage')"><span class="nav-icon">🤝</span>Parrainage</button>
+  <button onclick="allerA('nav-messages')"><span class="nav-icon">💬</span>Messages</button>
+</div>
+
+<!-- QR Modal -->
+
+<!-- QR Modal -->
+<div id="modal-qr">
+  <div class="modal-inner">
+    <h4>📱 Mon QR Code</h4>
+    <div id="qr-content"></div>
+    <p style="font-size:11px;color:#8fa896;margin-top:10px;">Présentez ce QR code à BIOSAVEUR</p>
+    <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('show')">Fermer</button>
+  </div>
+</div>
+  
+  <!-- Modal Notifications -->
+<div id="modal-notifs">
+  <div class="modal-inner" style="max-width:400px;text-align:left;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h4 style="margin:0;">🔔 Mes Notifications</h4>
+      <button onclick="marquerToutLu()" style="font-size:11px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600;">Tout marquer lu</button>
+    </div>
+    <div id="notifs-list"><div class="empty">Chargement...</div></div>
+    <button class="btn-ghost" onclick="document.getElementById('modal-notifs').classList.remove('show')" style="width:100%;margin-top:12px;background:var(--border);border:none;border-radius:8px;padding:10px;cursor:pointer;">Fermer</button>
+  </div>
+</div>
+  
+  <!-- Modal Profil -->
+<div id="modal-profil">
+  <div class="modal-inner" style="max-width:400px;text-align:left;">
+    <h4>✏️ Modifier mon profil</h4>
+
+    <!-- Photo de profil -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="profil-avatar-preview" style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:32px;color:white;margin:0 auto 10px;overflow:hidden;">
+        <span id="profil-avatar-lettre"></span>
+        <img id="profil-avatar-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;">
+      </div>
+      <label style="cursor:pointer;color:var(--green);font-size:13px;font-weight:600;">
+        📷 Changer la photo
+        <input type="file" id="profil-photo-input" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
+      </label>
+    </div>
+
+    <!-- Nom & Prénom -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Nom</label>
+      <input type="text" id="profil-nom" class="form-input" style="margin-bottom:0;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Prénom</label>
+      <input type="text" id="profil-prenom" class="form-input" style="margin-bottom:0;">
+    </div>
+
+   <!-- Localisation -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">📍 Quartier / Commune</label>
+      <input type="text" id="profil-localisation" class="form-input" placeholder="Ex: Abobo, Cocody, Yopougon..." style="margin-bottom:0;">
+    </div>
+
+    <!-- Anniversaire -->
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">🎂 Date de naissance (jour et mois)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <select id="profil-jour-naissance" class="form-input" style="margin-bottom:0;">
+          <option value="">Jour</option>
+        </select>
+        <select id="profil-mois-naissance" class="form-input" style="margin-bottom:0;">
+          <option value="">Mois</option>
+          <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+          <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+          <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+          <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Mot de passe -->
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">🔒 Changer le mot de passe</div>
+      <input type="password" id="profil-ancien-mdp" class="form-input" placeholder="Ancien mot de passe">
+      <input type="password" id="profil-nouveau-mdp" class="form-input" placeholder="Nouveau mot de passe">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-green" style="flex:1;" onclick="enregistrerProfil()">✓ Enregistrer</button>
+      <button class="btn-ghost" onclick="document.getElementById('modal-profil').classList.remove('show')" style="flex:1;background:var(--border);border:none;border-radius:8px;padding:10px;cursor:pointer;">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const role = localStorage.getItem('role');
+if (!token) window.location.href = '/';
+if (role && role !== 'client') window.location.href = '/dashboard.html';
+
+function deconnexion() { localStorage.clear(); window.location.href = '/'; }
+function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
+function allerA(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function activerNotificationsPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Les notifications ne sont pas supportées sur cet appareil/navigateur.');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { alert('Vous avez refusé les notifications. Vous pouvez les activer plus tard dans les réglages du navigateur.'); return; }
+
+    const reg = await navigator.serviceWorker.ready;
+    const keyRes = await fetch('/api/auth/vapid-public-key');
+    const { publicKey } = await keyRes.json();
+
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+    await fetch('/api/auth/push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ subscription })
+    });
+
+    document.getElementById('btn-push').textContent = '✅ Activées';
+    alert('🔔 Notifications activées ! Vous recevrez des alertes même l\'application fermée.');
+  } catch (err) {
+    console.error(err);
+    alert('Erreur lors de l\'activation des notifications.');
+  }
+}
+function formatDate(d) { return new Date(d).toLocaleDateString('fr-FR'); } function formatDateHeure(d) { const dt = new Date(d); return dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
+
+let monQRCode = '';
+let mesCotisations = [];
+  
+function ouvrirModalProfil() {
+  const nom = document.getElementById('profile-nom').textContent.split(' ')[0] || '';
+  const prenom = document.getElementById('profile-nom').textContent.split(' ')[1] || '';
+  document.getElementById('profil-nom').value = nom;
+  document.getElementById('profil-prenom').value = prenom;
+  document.getElementById('profil-ancien-mdp').value = '';
+  document.getElementById('profil-nouveau-mdp').value = '';
+  const selectJour = document.getElementById('profil-jour-naissance');
+  if (!selectJour.dataset.rempli) {
+    for (let j = 1; j <= 31; j++) selectJour.innerHTML += '<option value="' + j + '">' + j + '</option>';
+    selectJour.dataset.rempli = '1';
+  }
+  document.getElementById('modal-profil').classList.add('show');
+}
+
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('profil-avatar-img');
+      const lettre = document.getElementById('profil-avatar-lettre');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      lettre.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function enregistrerProfil() {
+  const nom = document.getElementById('profil-nom').value.trim();
+  const prenom = document.getElementById('profil-prenom').value.trim();
+  const localisation = document.getElementById('profil-localisation').value.trim();
+  const ancienMdp = document.getElementById('profil-ancien-mdp').value;
+  const nouveauMdp = document.getElementById('profil-nouveau-mdp').value;
+  const photoInput = document.getElementById('profil-photo-input');
+  const boutonEnregistrer = document.querySelector('#modal-profil .btn-green');
+  const texteOriginal = boutonEnregistrer.textContent;
+  boutonEnregistrer.textContent = '⏳ Enregistrement...';
+  boutonEnregistrer.disabled = true;
+  try {
+    // Mettre à jour nom, prénom, localisation, photo
+    let photo = undefined;
+    if (photoInput.files && photoInput.files[0]) {
+      const fichier = photoInput.files[0];
+      if (fichier.size > 8 * 1024 * 1024) {
+        alert('❌ Photo trop lourde (max 8 Mo). Choisissez une photo plus légère.');
+        boutonEnregistrer.textContent = texteOriginal;
+        boutonEnregistrer.disabled = false;
+        return;
+      }
+      photo = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Impossible de lire le fichier'));
+        reader.onload = e => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('Format de photo non supporté'));
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX = 300;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } }
+            else { if (h > MAX) { w = w * MAX / h; h = MAX; } }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(fichier);
+      });
+    }
+   const jourNaissance = document.getElementById('profil-jour-naissance').value;
+    const moisNaissance = document.getElementById('profil-mois-naissance').value;
+    const bodyProfil = {};
+    if (nom) bodyProfil.nom = nom;
+    if (prenom) bodyProfil.prenom = prenom;
+    if (localisation !== undefined) bodyProfil.localisation = localisation;
+    if (photo) bodyProfil.photo = photo;
+    if (jourNaissance) bodyProfil.jourNaissance = parseInt(jourNaissance);
+    if (moisNaissance) bodyProfil.moisNaissance = parseInt(moisNaissance);
+    if (Object.keys(bodyProfil).length > 0) {
+      const res = await fetch('/api/auth/profil', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(bodyProfil)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Erreur lors de la mise à jour du profil');
+    }
+
+    // Changer mot de passe si rempli
+    if (ancienMdp && nouveauMdp) {
+      const resMdp = await fetch('/api/auth/changer-mdp', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ ancienMdp, nouveauMdp })
+      });
+      const dataMdp = await resMdp.json();
+      if (!resMdp.ok) throw new Error('Mot de passe : ' + dataMdp.message);
+    }
+
+    alert('✅ Profil mis à jour !');
+    document.getElementById('modal-profil').classList.remove('show');
+    chargerProfil();
+  } catch (err) {
+    alert('❌ Erreur : ' + err.message);
+  } finally {
+    boutonEnregistrer.textContent = texteOriginal;
+    boutonEnregistrer.disabled = false;
+  }
+}
+  
+async function chargerProfil() {
+  try {
+    const res = await fetch('/api/auth/profil', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('profile-nom').textContent = data.nom + ' ' + data.prenom;
+    document.getElementById('profile-tel').textContent = '📞 ' + data.telephone;
+if (data.localisation) {       document.getElementById('profil-localisation') && (document.getElementById('profil-localisation').value = data.localisation);     }
+    if (data.jourNaissance || data.moisNaissance) {
+      const selectJour = document.getElementById('profil-jour-naissance');
+      if (selectJour && !selectJour.dataset.rempli) { for (let j = 1; j <= 31; j++) selectJour.innerHTML += '<option value="' + j + '">' + j + '</option>'; selectJour.dataset.rempli = '1'; }
+      if (data.jourNaissance) document.getElementById('profil-jour-naissance').value = data.jourNaissance;
+      if (data.moisNaissance) document.getElementById('profil-mois-naissance').value = data.moisNaissance;
+    }
+    document.getElementById('user-name').textContent = data.prenom;
+    monQRCode = data.qrCode || '';
+  } catch(e) {
+    const nom = localStorage.getItem('user-nom') || 'Client';
+    document.getElementById('profile-nom').textContent = nom;
+    document.getElementById('avatar').textContent = nom[0].toUpperCase();
+  }
+}
+
+async function chargerCotisations() {
+  try {
+    const res = await fetch('/api/cotisations/mes-cotisations', { headers: { 'Authorization': 'Bearer ' + token } });
+    mesCotisations = await res.json();
+
+    const totalPoulets = mesCotisations.reduce((s,c) => s+(c.objectifPoulets||0), 0);
+    const totalCollecte = mesCotisations.reduce((s,c) => s+(c.montantCollecte||0), 0);
+    const totalObjectif = mesCotisations.reduce((s,c) => s+(c.montantObjectif||0), 0);
+    const pct = totalObjectif > 0 ? Math.round(totalCollecte/totalObjectif*100) : 0;
+
+    document.getElementById('stat-poulets').textContent = totalPoulets;
+    document.getElementById('stat-collecte').textContent = nbFCFA(totalCollecte);
+    document.getElementById('stat-progression').textContent = pct + '%';
+
+    // Rappel de versement
+    const cotEnCours = mesCotisations.filter(c => c.statut === 'en_cours');
+    const rappelDiv = document.getElementById('rappel-versement');
+    if (cotEnCours.length) {
+      const resteTotal = cotEnCours.reduce((s,c) => s + Math.max(0, (c.montantObjectif||0)-(c.montantCollecte||0)), 0);
+      rappelDiv.style.display = 'block';
+      rappelDiv.innerHTML = '⏰ Il vous reste <strong>' + nbFCFA(resteTotal) + ' FCFA</strong> à verser pour ' + (cotEnCours.length > 1 ? 'vos cotisations en cours' : 'votre cotisation de ' + cotEnCours[0].mois) + '.';
+    } else {
+      rappelDiv.style.display = 'none';
+    }
+
+    const div = document.getElementById('cotisations-list');
+    if (!mesCotisations.length) { div.innerHTML = '<div class="empty">Aucune cotisation en cours</div>'; }
+    else {
+     div.innerHTML = mesCotisations.map(c => {
+        const p = Math.min(100, Math.round((c.montantCollecte||0)/(c.montantObjectif||1)*100));
+        const bc = c.statut==='complete'?'badge-green':c.statut==='livre'?'badge-blue':'badge-amber';
+        const sl = c.statut==='en_cours'?'En cours':c.statut==='complete'?'Complète ✅':'Livrée 🚚';
+        const reste = Math.max(0, (c.montantObjectif||0) - (c.montantCollecte||0));
+        const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
+       const etapes = [
+          { key: 'creee', label: 'Créée', icone: '✓' },
+          { key: 'en_cours', label: 'En cours', icone: '💰' },
+          { key: 'complete', label: 'Complète', icone: '✅' },
+          { key: 'livre', label: 'Livrée', icone: '🚚' }
+        ];
+        const ordreStatut = { en_cours: 1, complete: 2, livre: 3 };
+        const etapeActuelle = ordreStatut[c.statut] || 1;
+        const timelineHTML = '<div class="timeline">' + etapes.map((e, idx) => {
+          const done = idx <= etapeActuelle;
+          return '<div class="timeline-step' + (done ? ' done' : '') + '"><div class="timeline-line"></div><div class="dot">' + (done ? '✓' : idx+1) + '</div><div class="label">' + e.label + '</div></div>';
+        }).join('') + '</div>';
+        return `<div class="cotisation-item">
+          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small></div><span class="badge ${bc}">${sl}</span></div>
+          ${timelineHTML}
+          <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+          <div class="cot-stats"><span>Versé : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${p}%</span><span>Objectif : <strong>${nbFCFA(c.montantObjectif)} FCFA</strong></span></div>
+       ${c.jourLivraisonChoisi?`<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📅 Livraison le <strong>${c.jourLivraisonChoisi}</strong></div>`:''}
+          ${c.statut!=='livre'?`
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;">
+            <span style="color:var(--text-muted);">🔄 Renouvellement automatique le mois prochain</span>
+            <label style="position:relative;display:inline-block;width:36px;height:20px;">
+              <input type="checkbox" ${c.renouvellementAuto!==false?'checked':''} onchange="toggleRenouvellement('${c._id}')" style="opacity:0;width:0;height:0;">
+              <span onclick="document.querySelector('#toggle-${c._id} input').click()" id="toggle-${c._id}" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${c.renouvellementAuto!==false?'var(--green)':'var(--border)'};border-radius:20px;transition:.3s;"></span>
+            </label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+            <button class="btn-green" style="padding:9px;font-size:12px;" onclick="toggleCarte('${c._id}','verser')">💰 Verser</button>
+            <button class="btn-green" style="padding:9px;font-size:12px;background:var(--blue);" onclick="toggleCarte('${c._id}','livraison')">🚚 Livraison</button>
+          </div>
+          <div id="panel-verser-${c._id}" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+            <input type="number" id="vmontant-${c._id}" class="form-input" placeholder="Montant (FCFA)" value="${reste>0?reste:''}">
+            <select id="vmode-${c._id}" class="form-input">
+              <option value="">-- Mode de paiement --</option>
+              <option value="Wave">Wave</option>
+              <option value="Orange Money">Orange Money</option>
+              <option value="Espèces">Espèces</option>
+            </select>
+            <input type="text" id="vref-${c._id}" class="form-input" placeholder="Référence (optionnel)">
+            <button class="btn-green" onclick="confirmerVersementCarte('${c._id}')">✅ Confirmer le versement</button>
+          </div>
+          <div id="panel-livraison-${c._id}" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+            <input type="date" id="ldate-${c._id}" class="form-input">
+            <input type="time" id="lheure-${c._id}" class="form-input">
+            <button class="btn-green" onclick="confirmerLivraisonCarte('${c._id}')">📅 Confirmer la livraison</button>
+          </div>
+          `: (c.note ? `
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;text-align:center;">
+            <div style="font-size:16px;">${'⭐'.repeat(c.note)}${'☆'.repeat(5-c.note)}</div>
+            ${c.commentaireAvis ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">"${c.commentaireAvis}"</div>` : ''}
+          </div>
+          ` : `
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;text-align:center;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Comment était votre livraison ?</div>
+            <div id="stars-${c._id}" style="font-size:24px;cursor:pointer;">${[1,2,3,4,5].map(n => `<span onclick="choisirNote('${c._id}',${n})" id="star-${c._id}-${n}">☆</span>`).join('')}</div>
+            <input type="text" id="avis-${c._id}" class="form-input" placeholder="Un petit commentaire (optionnel)" style="margin-top:8px;">
+            <button class="btn-green" style="padding:9px;font-size:12px;" onclick="envoyerAvis('${c._id}')">✓ Envoyer mon avis</button>
+          </div>
+          `)}
+        </div>`;
+      }).join(''); 
+    }
+
+   remplirSelectPaiement();
+
+    // Versements
+    const versements = [];
+    mesCotisations.forEach(c => (c.versements||[]).forEach(v => versements.push({...v, mois:c.mois})));
+    versements.sort((a,b) => new Date(b.date)-new Date(a.date));
+    const vDiv = document.getElementById('versements-list');
+    if (!versements.length) vDiv.innerHTML = '<div class="empty">Aucun versement enregistré</div>';
+    else vDiv.innerHTML = versements.map((v,i) =>
+      `<div class="versement-item"><div><div class="v-montant">+ ${nbFCFA(v.montant)} FCFA</div><div class="v-mode">${v.modePaiement||'–'} • ${v.mois}</div></div>
+      <div style="text-align:right;"><div class="v-date">${v.date?formatDateHeure(v.date):'–'}</div>
+      <button onclick='genererRecuVersement(${JSON.stringify(v).replace(/'/g,"&apos;")})' style="margin-top:4px;background:var(--green-light);color:var(--green);border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;">📄 Reçu</button></div></div>`
+    ).join('');
+
+
+  } catch(e) {
+   console.error('ERREUR CHARGEMENT COTISATIONS:', e);
+    document.getElementById('cotisations-list').innerHTML = '<div class="empty">Erreur de chargement</div>';
+  }
+}
+  let notesEnCours = {};
+
+function choisirNote(cotisationId, note) {
+  notesEnCours[cotisationId] = note;
+  for (let n = 1; n <= 5; n++) {
+    document.getElementById('star-' + cotisationId + '-' + n).textContent = n <= note ? '⭐' : '☆';
+  }
+}
+
+async function envoyerAvis(cotisationId) {
+  const note = notesEnCours[cotisationId];
+  if (!note) { alert('Choisissez une note en cliquant sur les étoiles'); return; }
+  const commentaireAvis = document.getElementById('avis-' + cotisationId).value;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/noter', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ note, commentaireAvis })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Merci pour votre avis !');
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+  
+  async function toggleRenouvellement(cotisationId) {
+  const res = await fetch('/api/cotisations/' + cotisationId + '/renouvellement-auto', {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('toggle-' + cotisationId).style.background = data.renouvellementAuto ? 'var(--green)' : 'var(--border)';
+  }
+}
+
+  function remplirSelectPaiement() {
+  const select = document.getElementById('cotisation-a-payer');
+  if (!select) return;
+  const enCours = mesCotisations.filter(c => c.statut === 'en_cours');
+  select.innerHTML = '<option value="">-- Choisir une cotisation --</option>' +
+    enCours.map(c => {
+      const reste = Math.max(0, (c.montantObjectif||0) - (c.montantCollecte||0));
+      return '<option value="' + c._id + '">' + c.mois + ' — Reste ' + nbFCFA(reste) + ' FCFA</option>';
+    }).join('');
+}
+
+async function payerAvecCinetPay() {
+  const cotisationId = document.getElementById('cotisation-a-payer').value;
+  if (!cotisationId) { alert('Choisissez une cotisation à payer'); return; }
+  try {
+    const res = await fetch('/api/cinetpay/initier/' + cotisationId, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (res.ok && data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+    } else {
+      alert('Erreur : ' + (data.message || 'Impossible de générer le lien de paiement'));
+    }
+  } catch (err) {
+    alert('Erreur de connexion. Réessayez.');
+  }
+}
+
+function toggleCarte(id, type) {
+  const panelVerser = document.getElementById('panel-verser-' + id);
+  const panelLivraison = document.getElementById('panel-livraison-' + id);
+  if (type === 'verser') {
+    panelLivraison.style.display = 'none';
+    panelVerser.style.display = panelVerser.style.display === 'none' ? 'block' : 'none';
+  } else {
+    panelVerser.style.display = 'none';
+    panelLivraison.style.display = panelLivraison.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function confirmerVersementCarte(cotisationId) {
+  const montant = parseInt(document.getElementById('vmontant-' + cotisationId).value);
+  const modePaiement = document.getElementById('vmode-' + cotisationId).value;
+  const reference = document.getElementById('vref-' + cotisationId).value;
+  if (!montant || montant <= 0) { alert('Entrez un montant valide'); return; }
+  if (!modePaiement) { alert('Choisissez un mode de paiement'); return; }
+  if (!confirm('Confirmer un versement de ' + nbFCFA(montant) + ' FCFA ?')) return;
+  const res = await fetch('/api/cotisations/' + cotisationId + '/versement', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ montant, modePaiement, reference })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Versement enregistré ! Merci.');
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+
+async function confirmerLivraisonCarte(cotisationId) {
+  const date = document.getElementById('ldate-' + cotisationId).value;
+  const heure = document.getElementById('lheure-' + cotisationId).value;
+  if (!date) { alert('Choisissez une date'); return; }
+
+  // Vérifier la disponibilité du créneau
+  const resCreneau = await fetch('/api/cotisations/creneaux?date=' + date, { headers: { 'Authorization': 'Bearer ' + token } });
+  const creneau = await resCreneau.json();
+  if (!creneau.disponible) {
+    alert('❌ Cette date est complète (' + creneau.total + '/' + creneau.max + ' livraisons déjà prévues). Merci de choisir un autre jour.');
+    return;
+  }
+
+  const dateObj = new Date(date);
+  const jourLivraisonChoisi = dateObj.toLocaleDateString('fr-FR') + (heure ? ' à ' + heure : '');
+  const res = await fetch('/api/cotisations/' + cotisationId + '/jour-livraison', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ jourLivraisonChoisi })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Date de livraison enregistrée : ' + jourLivraisonChoisi + ' (' + creneau.restant + ' place(s) restante(s) ce jour-là)');
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+
+// ─── CATALOGUE PRODUITS & PANIER CLIENT ────────────────
+const CATALOGUE_PRODUITS = [
+  { nom: 'Poulet entier - Classic', prix: 2800, unite: 'pièce' },
+  { nom: 'Poulet entier - Premium', prix: 3000, unite: 'pièce' },
+  { nom: 'Poulet entier - Excellent', prix: 3500, unite: 'pièce' },
+  { nom: 'Blanc de poulet', prix: 4000, unite: 'kg' },
+  { nom: 'Gésiers', prix: 3000, unite: 'kg' },
+  { nom: 'Cuisse', prix: 3000, unite: 'kg' },
+  { nom: 'Aile', prix: 2800, unite: 'kg' },
+  { nom: 'Patte', prix: 1500, unite: 'kg' }
+];
+
+const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function remplirMoisClient() {
+  const select = document.getElementById('new-cot-mois');
+  const annee = new Date().getFullYear();
+  let options = '<option value="">-- Choisir le mois --</option>';
+  for (let i = 0; i < 12; i++) {
+    const label = MOIS_NOMS[i] + ' ' + annee;
+    options += '<option value="' + label + '">' + label + '</option>';
+  }
+  select.innerHTML = options;
+}
+
+function ajouterLignePanierClient() {
+  const div = document.getElementById('new-panier-lignes');
+  const ligneId = 'cligne-' + Date.now();
+  const optionsProduits = CATALOGUE_PRODUITS.map(p =>
+    '<option value="' + p.nom + '" data-prix="' + p.prix + '">' + p.nom + ' (' + nbFCFA(p.prix) + ' FCFA/' + p.unite + ')</option>'
+  ).join('');
+
+  const ligneHTML = '<div class="panier-ligne" id="' + ligneId + '" style="display:grid;grid-template-columns:2fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">' +
+    '<select class="panier-produit form-input" style="margin-bottom:0;" onchange="calculerTotalPanierClient()">' +
+    '<option value="">-- Produit --</option>' + optionsProduits +
+    '</select>' +
+    '<input type="number" class="panier-quantite form-input" style="margin-bottom:0;" placeholder="Qté" min="0" step="0.01" oninput="calculerTotalPanierClient()">' +
+    '<button type="button" style="background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:8px;cursor:pointer;" onclick="document.getElementById(\'' + ligneId + '\').remove(); calculerTotalPanierClient();">🗑</button>' +
+    '</div>';
+
+  div.insertAdjacentHTML('beforeend', ligneHTML);
+}
+
+function calculerTotalPanierClient() {
+  let total = 0;
+  document.querySelectorAll('#new-panier-lignes .panier-ligne').forEach(ligne => {
+    const select = ligne.querySelector('.panier-produit');
+    const qte = parseFloat(ligne.querySelector('.panier-quantite').value) || 0;
+    const prix = select.selectedOptions[0] ? parseFloat(select.selectedOptions[0].dataset.prix) || 0 : 0;
+    total += qte * prix;
+  });
+  document.getElementById('new-panier-total').textContent = nbFCFA(total);
+}
+
+function calculerPortions() {
+  const nb = parseInt(document.getElementById('calc-nb-personnes').value);
+  const occasion = document.getElementById('calc-occasion').value;
+  const resDiv = document.getElementById('calc-resultat');
+  if (!nb || nb < 1) { resDiv.textContent = 'Entrez un nombre de personnes valide.'; return; }
+
+  const portionParPersonneKg = occasion === 'evenement' ? 0.45 : 0.3; // kg de poulet cru par personne
+  const poidsTotalKg = nb * portionParPersonneKg;
+  const AVG_POULET_KG = 1.2; // poids moyen d'un poulet entier
+  const nbPoulets = Math.ceil(poidsTotalKg / AVG_POULET_KG);
+
+  resDiv.innerHTML = 'Pour <strong>' + nb + ' personne(s)</strong> (' + (occasion === 'evenement' ? 'événement' : 'repas simple') + '), il vous faut environ <strong>' + poidsTotalKg.toFixed(1) + ' kg</strong> de poulet, soit <strong>' + nbPoulets + ' poulet(s) entier(s)</strong>.' +
+    ' <button type="button" class="btn-green" style="width:auto;padding:5px 10px;font-size:11px;margin-left:6px;" onclick="ajouterCalculAuPanier(' + nbPoulets + ')">+ Ajouter au panier</button>';
+}
+
+function ajouterCalculAuPanier(nbPoulets) {
+  ajouterLignePanierClient();
+  const lignes = document.querySelectorAll('#new-panier-lignes .panier-ligne');
+  const derniere = lignes[lignes.length - 1];
+  const select = derniere.querySelector('.panier-produit');
+  select.value = 'Poulet entier - Classic';
+  derniere.querySelector('.panier-quantite').value = nbPoulets;
+  calculerTotalPanierClient();
+}
+
+function recupererArticlesPanierClient() {
+  const articles = [];
+  document.querySelectorAll('#new-panier-lignes .panier-ligne').forEach(ligne => {
+    const select = ligne.querySelector('.panier-produit');
+    const qte = parseFloat(ligne.querySelector('.panier-quantite').value) || 0;
+    if (select.value && qte > 0) {
+      const prix = parseFloat(select.selectedOptions[0].dataset.prix);
+      articles.push({ produit: select.value, quantite: qte, prixUnitaire: prix });
+    }
+  });
+  return articles;
+}
+
+async function creerNouvelleCotisation() {
+  const mois = document.getElementById('new-cot-mois').value;
+  const articles = recupererArticlesPanierClient();
+  if (!mois) { alert('Choisissez un mois'); return; }
+  if (!articles.length) { alert('Ajoutez au moins un article au panier'); return; }
+
+  const userId = JSON.parse(atob(token.split('.')[1])).id;
+  const res = await fetch('/api/cotisations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ clientId: userId, articles, mois })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('✅ Cotisation créée !');
+    document.getElementById('new-panier-lignes').innerHTML = '';
+    ajouterLignePanierClient();
+    document.getElementById('new-cot-mois').value = '';
+    calculerTotalPanierClient();
+    chargerCotisations();
+  } else {
+    alert('Erreur : ' + data.message);
+  }
+}
+  async function chargerNotifications() {
+  try {
+    const res = await fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const badge = document.getElementById('notif-badge');
+    if (data.nonLues > 0) {
+      badge.textContent = data.nonLues;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+async function ouvrirNotifications() {
+  document.getElementById('modal-notifs').classList.add('show');
+  try {
+    const res = await fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const div = document.getElementById('notifs-list');
+    if (!data.notifications.length) {
+      div.innerHTML = '<div class="empty">Aucune notification</div>';
+    } else {
+      div.innerHTML = data.notifications.map(n =>
+        `<div onclick="marquerLu('${n._id}', this)" style="padding:10px;border-bottom:1px solid var(--border);cursor:pointer;background:${n.lu ? 'white' : 'var(--green-light)'};border-radius:6px;margin-bottom:6px;">
+          <div style="font-size:13px;${n.lu ? '' : 'font-weight:600;'}">${n.message}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${formatDateHeure(n.createdAt)}</div>
+        </div>`
+      ).join('');
+    }
+    // Mettre à jour le badge
+    chargerNotifications();
+  } catch(e) {}
+}
+
+async function marquerLu(id, el) {
+  try {
+    await fetch('/api/notifications/' + id + '/lire', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    el.style.background = 'white';
+    el.style.fontWeight = 'normal';
+    chargerNotifications();
+  } catch(e) {}
+}
+
+async function marquerToutLu() {
+  try {
+    await fetch('/api/notifications/lire-tout', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    document.querySelectorAll('#notifs-list > div').forEach(el => {
+      el.style.background = 'white';
+    });
+    chargerNotifications();
+  } catch(e) {}
+}
+  async function chargerParrainage() {
+  try {
+    const res = await fetch('/api/auth/parrainage', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    document.getElementById('mon-code-parrainage').textContent = data.codeParrainage || '–';
+    document.getElementById('mes-points').textContent = data.points;
+    document.getElementById('points-fcfa').textContent = nbFCFA(data.pointsEnFCFA) + ' FCFA';
+    document.getElementById('nb-filleuls').textContent = data.filleuls.length;
+    document.getElementById('liste-filleuls').innerHTML = data.filleuls.length ?
+      data.filleuls.map(f => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>👤 ${f.nom}</span><span style="color:var(--text-muted);font-size:11px;">${formatDate(f.date)}</span></div>`).join('') :
+      '<div class="empty">Aucun filleul pour le moment</div>';
+  } catch(e) { console.error('Erreur parrainage:', e); }
+}
+  
+ function simulerPoints() {
+  const nb = parseInt(document.getElementById('sim-filleuls').value);
+  document.getElementById('sim-filleuls-val').textContent = nb;
+  const points = nb * 700; // 500 (inscription) + 200 (1er versement)
+  const fcfa = Math.floor((points / 1000) * 700);
+  document.getElementById('sim-points').textContent = nbFCFA(points) + ' pts';
+  document.getElementById('sim-fcfa').textContent = '≈ ' + nbFCFA(fcfa) + ' FCFA de réduction';
+}
+async function chargerClassementParrains() {
+  try {
+    const res = await fetch('/api/auth/classement-parrains', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const div = document.getElementById('classement-parrains');
+    if (!data.length) { div.innerHTML = '<div class="empty" style="padding:10px;">Soyez le premier du classement !</div>'; return; }
+    const medailles = ['🥇','🥈','🥉'];
+    div.innerHTML = data.map((u, i) =>
+      '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">' +
+      '<span style="width:22px;text-align:center;">' + (medailles[i] || (i+1)) + '</span>' +
+      '<span style="flex:1;">' + u.nom + ' ' + u.prenom + '</span>' +
+      '<strong style="color:var(--gold);">' + u.points + ' pts</strong></div>'
+    ).join('');
+  } catch(e) {}
+}
+
+function copierCode() {
+  const code = document.getElementById('mon-code-parrainage').textContent;
+  navigator.clipboard.writeText(code).then(() => alert('✅ Code copié : ' + code));
+}
+ function partagerParrainage() {
+  const code = document.getElementById('mon-code-parrainage').textContent;
+  const lien = 'https://biosaveur-app.onrender.com/inscription.html?parrain=' + encodeURIComponent(code);
+  const message = 'Salut ! Rejoins BIOSAVEUR 🐔 avec mon code de parrainage ' + code + ' et reçois des poulets frais livrés à domicile. Inscris-toi directement ici : ' + lien;
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+}
+ async function chargerHistorique() {
+  try {
+    const res = await fetch('/api/cotisations/mon-historique', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+
+    document.getElementById('hist-total-livre').textContent = nbFCFA(data.totalLivre);
+    document.getElementById('hist-nb-livraisons').textContent = data.nombreLivraisons;
+    document.getElementById('hist-frequence').textContent = data.frequenceMoyenneJours ? data.frequenceMoyenneJours + ' j' : '–';
+
+   let badge = { emoji: '🥉', label: 'Bronze', couleur: '#a97142' };
+    if (data.nombreLivraisons >= 6) badge = { emoji: '👑', label: 'Ambassadeur', couleur: '#c8960c' };
+    else if (data.nombreLivraisons >= 3) badge = { emoji: '🥈', label: 'Argent', couleur: '#8a8a8a' };
+    document.getElementById('badge-fidelite').innerHTML =
+      '<span style="background:' + badge.couleur + '20;color:' + badge.couleur + ';padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">' + badge.emoji + ' Client ' + badge.label + '</span>' +
+      (data.nombreLivraisons >= 6 ? '<div style="font-size:11px;color:var(--gold);margin-top:4px;">🎁 -5% automatique sur vos prochaines cotisations</div>' : '');
+    const div = document.getElementById('historique-list');
+    if (!data.cotisationsLivrees.length) {
+      div.innerHTML = '<div class="empty">Aucune livraison effectuée pour le moment</div>';
+    } else {
+      div.innerHTML = data.cotisationsLivrees.map(c => {
+        const produitsTxt = c.articles && c.articles.length ? c.articles.map(a => a.quantite + 'x ' + a.produit).join(', ') : (c.objectifPoulets||0) + ' poulets';
+       return `<div class="cotisation-item">
+          <div class="cot-header"><div class="cot-title">${c.mois}<br><small style="font-weight:400;color:var(--text-muted)">${produitsTxt}</small>${c.reductionAmbassadeur?'<br><small style="color:var(--gold);font-weight:600;">🎁 -5% Ambassadeur appliqué</small>':''}</div><span class="badge ${bc}">${sl}</span></div>
+          <div class="cot-stats"><span>Total : <strong>${nbFCFA(c.montantCollecte)} FCFA</strong></span><span>${c.dateLivraisonEffective?formatDate(c.dateLivraisonEffective):'–'}</span></div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    console.error('Erreur historique:', e);
+  }
+}
+  async function chargerMessages() {
+  try {
+    const res = await fetch('/api/messages/mes-messages', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    const div = document.getElementById('messages-list');
+    if (!data.length) { div.innerHTML = ''; return; }
+    div.innerHTML = data.map(m =>
+      `<div class="msg-item"><div>${m.contenu}</div><div class="msg-date">${formatDate(m.dateEnvoi)}</div>${m.reponse?`<div class="msg-reply">↩ BIOSAVEUR : ${m.reponse}</div>`:''}</div>`
+    ).join('');
+  } catch(e) {}
+}
+
+async function envoyerMessage() {
+  const contenu = document.getElementById('msg-contenu').value.trim();
+  if (!contenu) { alert('Écrivez votre message'); return; }
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ contenu })
+  });
+  if (res.ok) { document.getElementById('msg-contenu').value = ''; alert('✅ Message envoyé !'); chargerMessages(); }
+}
+
+  async function genererRecuVersement(versement) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const vert = [26, 107, 60];
+  const w = 210;
+  const fmt = n => Number(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+  const logoBase64 = await new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/logo_biosaveur.png';
+  });
+
+  doc.setFillColor(...vert);
+  doc.rect(0, 0, w, 35, 'F');
+  if (logoBase64) doc.addImage(logoBase64, 'PNG', 14, 7, 22, 22);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BIOSAVEUR', logoBase64 ? 40 : 14, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Reçu de versement', logoBase64 ? 40 : 14, 23);
+
+  let y = 55;
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...vert);
+  doc.text('REÇU DE PAIEMENT', w/2, y, { align: 'center' });
+  y += 20;
+
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  const nomClient = document.getElementById('profile-nom').textContent;
+  const lignes = [
+    ['Client', nomClient],
+    ['Mois de cotisation', versement.mois || '-'],
+    ['Montant versé', fmt(versement.montant) + ' FCFA'],
+    ['Mode de paiement', versement.modePaiement || '-'],
+    ['Référence', versement.reference || '-'],
+    ['Date', versement.date ? new Date(versement.date).toLocaleDateString('fr-FR') + ' à ' + new Date(versement.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '-']
+  ];
+  lignes.forEach(([label, val]) => {
+    doc.setFont('helvetica', 'normal');
+    doc.text(label + ' :', 20, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(val), 90, y);
+    y += 10;
+  });
+
+  y += 20;
+  doc.setDrawColor(...vert);
+  doc.line(20, y, w-20, y);
+  y += 10;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(100,100,100);
+  doc.text('Ce reçu confirme la réception de votre versement. Merci pour votre confiance.', w/2, y, { align: 'center' });
+
+  doc.setFillColor(...vert);
+  doc.rect(0, 268, w, 29, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7);
+  doc.text('AGRO VIVDURABLE SARL au capital de 1 000 000 FCFA - RCCM : CI-ABJ-03-2026-B12-02100 - IDU : CI-2026-0058857 H', w / 2, 275, { align: 'center' });
+  doc.text('Siege social : Abidjan, N\'dotre, non loin du marche de Sotraprim, quartier lot 3141, ilot 283, 01 BPM 6123 Abidjan 01', w / 2, 281, { align: 'center' });
+  doc.text('biosaveur48@gmail.com - Tel : 0757227998 / 0565454444', w / 2, 287, { align: 'center' });
+
+  doc.save('Recu_BIOSAVEUR_' + (versement.mois||'').replace(' ','_') + '.pdf');
+}
+
+function afficherQR() {
+  document.getElementById('qr-content').innerHTML = monQRCode
+    ? `<img src="${monQRCode}" style="max-width:200px;border-radius:8px;">`
+    : '<p style="color:#8fa896">QR code non disponible</p>';
+  document.getElementById('modal-qr').classList.add('show');
+}
+
+chargerProfil();
+chargerCotisations();
+chargerMessages();
+chargerHistorique();
+chargerNotifications();
+chargerParrainage();
+chargerClassementParrains();
+remplirMoisClient();
+ajouterLignePanierClient();
+simulerPoints();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(err => console.error('Erreur SW:', err));
+}
+</script>
+</body>
+</html>
