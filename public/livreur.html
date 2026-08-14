@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSAVEUR – Mode Livreur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--blue:#1565c0;--radius:12px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+:root{--green:#103d3a;--green-light:#e7f9f7;--gold:#828906;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--blue:#1565c0;--radius:12px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
+body{font-family:'Alan Sans','Segoe UI',Arial,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
 header{background:var(--green);color:white;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .logo{font-size:18px;font-weight:700;}
 .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;}
@@ -54,6 +57,20 @@ header{background:var(--green);color:white;padding:16px 20px;display:flex;align-
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role');
 if (!token) window.location.href = '/';
+
+// Intercepte toute réponse 401 (token expiré/invalide) et déconnecte proprement
+// au lieu de laisser les pages afficher des "0" partout sans explication.
+const _fetchNatif = window.fetch;
+window.fetch = function(...args) {
+  return _fetchNatif.apply(this, args).then(res => {
+    if (res.status === 401 && String(args[0]).startsWith('/api/')) {
+      localStorage.removeItem('token');
+      window.location.href = '/?session=expiree';
+      return new Promise(() => {});
+    }
+    return res;
+  });
+};
 
 function deconnexion() { localStorage.clear(); window.location.href = '/'; }
 function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }

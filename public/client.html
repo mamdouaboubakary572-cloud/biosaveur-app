@@ -4,16 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSAVEUR – Mon Espace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1a6b3c">
+<meta name="theme-color" content="#103d3a">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0;box-shadow:0 -2px 8px rgba(0,0,0,0.08);z-index:200;}
 .bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--text-muted);cursor:pointer;padding:4px 8px;}
 .bottom-nav button .nav-icon{font-size:20px;}
-:root{--green:#1a6b3c;--green-light:#e8f5ee;--gold:#c8960c;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;--red:#c0392b;--red-light:#fdecea;--blue:#1565c0;--blue-light:#e3eefa;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding-bottom:64px;}
+:root{--green:#103d3a;--green-light:#e7f9f7;--gold:#828906;--bg:#f4f6f4;--surface:#fff;--border:#e0e8e2;--text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;--red:#c0392b;--red-light:#fdecea;--blue:#1565c0;--blue-light:#e3eefa;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,0.07);}
+body{font-family:'Alan Sans','Segoe UI',Arial,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding-bottom:64px;}
 header{background:var(--green);color:white;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .logo{font-size:16px;font-weight:700;}
 .logo span{color:#a8d5b5;font-weight:400;font-size:12px;margin-left:6px;}
@@ -150,7 +153,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
       <button onclick="payerAvecCinetPay()" class="btn-green">💳 Payer maintenant</button>
     </div>
 
-    <div style="background:#e8f5ee;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a6b3c;">
+    <div style="background:#e7f9f7;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#103d3a;">
       <strong>📌 Ou payez manuellement :</strong><br>
       1. Cliquez sur votre mode de paiement<br>
       2. Effectuez le transfert vers <strong>0769476546</strong><br>
@@ -163,7 +166,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
       <a href="tel:*144*1*0769476546#" class="pay-btn" style="background:#FF6600;">
         📱 Orange Money<br><small style="font-weight:400;font-size:11px;">0769476546</small>
       </a>
-      <a href="tel:0769476546" class="pay-btn" style="background:#1a6b3c;grid-column:1/-1;">
+      <a href="tel:0769476546" class="pay-btn" style="background:#103d3a;grid-column:1/-1;">
         💵 Espèces — Appeler BIOSAVEUR<br><small style="font-weight:400;font-size:11px;">0769476546</small>
       </a>
     </div>
@@ -350,6 +353,20 @@ const token = localStorage.getItem('token');
 const role = localStorage.getItem('role');
 if (!token) window.location.href = '/';
 if (role && role !== 'client') window.location.href = '/dashboard.html';
+
+// Intercepte toute réponse 401 (token expiré/invalide) et déconnecte proprement
+// au lieu de laisser les pages afficher des "0" partout sans explication.
+const _fetchNatif = window.fetch;
+window.fetch = function(...args) {
+  return _fetchNatif.apply(this, args).then(res => {
+    if (res.status === 401 && String(args[0]).startsWith('/api/')) {
+      localStorage.removeItem('token');
+      window.location.href = '/?session=expiree';
+      return new Promise(() => {});
+    }
+    return res;
+  });
+};
 
 function deconnexion() { localStorage.clear(); window.location.href = '/'; }
 function nbFCFA(n) { return Number(n||0).toLocaleString('fr-FR'); }
@@ -990,7 +1007,7 @@ function copierCode() {
     document.getElementById('hist-frequence').textContent = data.frequenceMoyenneJours ? data.frequenceMoyenneJours + ' j' : '–';
 
    let badge = { emoji: '🥉', label: 'Bronze', couleur: '#a97142' };
-    if (data.nombreLivraisons >= 6) badge = { emoji: '👑', label: 'Ambassadeur', couleur: '#c8960c' };
+    if (data.nombreLivraisons >= 6) badge = { emoji: '👑', label: 'Ambassadeur', couleur: '#828906' };
     else if (data.nombreLivraisons >= 3) badge = { emoji: '🥈', label: 'Argent', couleur: '#8a8a8a' };
     document.getElementById('badge-fidelite').innerHTML =
       '<span style="background:' + badge.couleur + '20;color:' + badge.couleur + ';padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">' + badge.emoji + ' Client ' + badge.label + '</span>' +

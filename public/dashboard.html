@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>BIOSAVEUR – Tableau de Bord Admin</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1a6b3c">
+<meta name="theme-color" content="#103d3a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -13,8 +16,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --green:#1a6b3c;--green-light:#e8f5ee;--green-mid:#2d8653;
-  --gold:#c8960c;--gold-light:#fdf3d0;
+  --green:#103d3a;--green-light:#e7f9f7;--green-mid:#25b810;
+  --gold:#828906;--gold-light:#fcfee2;--yellow:#eaf624;
   --bg:#f4f6f4;--surface:#ffffff;--border:#e0e8e2;
   --text:#1a2e1f;--text-muted:#5a7060;--text-light:#8fa896;
   --red:#c0392b;--red-light:#fdecea;
@@ -23,7 +26,7 @@
   --radius:10px;--radius-lg:14px;
   --shadow:0 1px 4px rgba(0,0,0,0.07);
 }
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+body{font-family:'Alan Sans','Segoe UI',Arial,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
 
 /* HEADER */
 header{background:var(--green);color:white;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
@@ -252,8 +255,8 @@ tr:last-child td{border-bottom:none;}
         <div class="chart-card">
           <div class="chart-title">📈 Collecte vs Objectif (6 mois)</div>
           <div class="chart-legend">
-            <span><span class="legend-dot" style="background:#1a6b3c"></span>Collecté</span>
-            <span><span class="legend-dot" style="background:#c8960c"></span>Objectif</span>
+            <span><span class="legend-dot" style="background:#103d3a"></span>Collecté</span>
+            <span><span class="legend-dot" style="background:#828906"></span>Objectif</span>
           </div>
           <div style="position:relative;height:180px;">
             <canvas id="chartCollecte" role="img" aria-label="Collecte vs objectif sur 6 mois">Graphique collecte mensuelle.</canvas>
@@ -262,7 +265,7 @@ tr:last-child td{border-bottom:none;}
         <div class="chart-card">
           <div class="chart-title">🥧 Statut des cotisations</div>
           <div class="chart-legend">
-            <span><span class="legend-dot" style="background:#1a6b3c"></span>Complètes</span>
+            <span><span class="legend-dot" style="background:#103d3a"></span>Complètes</span>
             <span><span class="legend-dot" style="background:#1565c0"></span>En cours</span>
             <span><span class="legend-dot" style="background:#e65100"></span>En retard</span>
           </div>
@@ -274,7 +277,7 @@ tr:last-child td{border-bottom:none;}
           <div class="chart-title">📊 Évolution clients & livraisons (6 mois)</div>
           <div class="chart-legend">
             <span><span class="legend-dot" style="background:#1565c0;border-radius:99px"></span>Nouveaux clients</span>
-            <span><span class="legend-dot" style="background:#1a6b3c;border-radius:99px"></span>Livraisons</span>
+            <span><span class="legend-dot" style="background:#103d3a;border-radius:99px"></span>Livraisons</span>
           </div>
           <div style="position:relative;height:150px;">
             <canvas id="chartEvol" role="img" aria-label="Évolution clients et livraisons">Graphique évolution.</canvas>
@@ -785,6 +788,20 @@ tr:last-child td{border-bottom:none;}
 const token = localStorage.getItem('token');
 if (!token) window.location.href = '/';
 
+// Intercepte toute réponse 401 (token expiré/invalide) et déconnecte proprement
+// au lieu de laisser les pages afficher des "0" partout sans explication.
+const _fetchNatif = window.fetch;
+window.fetch = function(...args) {
+  return _fetchNatif.apply(this, args).then(res => {
+    if (res.status === 401 && String(args[0]).startsWith('/api/')) {
+      localStorage.removeItem('token');
+      window.location.href = '/?session=expiree';
+      return new Promise(() => {}); // stoppe net le traitement en cours, on quitte la page
+    }
+    return res;
+  });
+};
+
 // ─── UTILS ─────────────────────────────────────────────
 function deconnexion() { localStorage.removeItem('token'); window.location.href = '/'; }
 function toggleForm(id) { const f = document.getElementById(id); f.style.display = f.style.display === 'none' || !f.style.display ? 'block' : 'none'; }
@@ -940,8 +957,8 @@ async function chargerDashboard() {
   chartCollecte = new Chart(document.getElementById('chartCollecte'), {
     type: 'bar',
     data: { labels: mois, datasets: [
-      { label:'Collecté', data: collectes, backgroundColor:'#1a6b3c', borderRadius:4 },
-      { label:'Objectif', data: objectifs, type:'line', borderColor:'#c8960c', backgroundColor:'transparent', borderWidth:1.5, pointRadius:3, pointBackgroundColor:'#c8960c', tension:0.3 }
+      { label:'Collecté', data: collectes, backgroundColor:'#103d3a', borderRadius:4 },
+      { label:'Objectif', data: objectifs, type:'line', borderColor:'#828906', backgroundColor:'transparent', borderWidth:1.5, pointRadius:3, pointBackgroundColor:'#828906', tension:0.3 }
     ]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{ x:{ticks:{font:{size:10}},grid:{display:false}}, y:{ticks:{font:{size:10},callback:v=>(v/1000)+'k'},grid:{color:'rgba(0,0,0,0.05)'}} } }
@@ -952,7 +969,7 @@ async function chargerDashboard() {
     type: 'doughnut',
     data: { labels:['Complètes','En cours','Livrées'], datasets:[{
       data:[completes.length, actives.length, livrees.length],
-      backgroundColor:['#1a6b3c','#1565c0','#e65100'], borderWidth:0, hoverOffset:4
+      backgroundColor:['#103d3a','#1565c0','#e65100'], borderWidth:0, hoverOffset:4
     }]},
     options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
   });
@@ -962,7 +979,7 @@ async function chargerDashboard() {
     type: 'line',
     data: { labels: mois, datasets: [
      { label:'Nouveaux clients', data: nouveauxClientsParMois, borderColor:'#1565c0', backgroundColor:'rgba(21,101,192,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1565c0', borderWidth:2 },
-      { label:'Livraisons', data: livraisonsParMois, borderColor:'#1a6b3c', backgroundColor:'rgba(26,107,60,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#1a6b3c', borderWidth:2 }
+      { label:'Livraisons', data: livraisonsParMois, borderColor:'#103d3a', backgroundColor:'rgba(16,61,58,0.07)', fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#103d3a', borderWidth:2 }
     ]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{ x:{ticks:{font:{size:10}},grid:{display:false}}, y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}} } }
@@ -1139,7 +1156,7 @@ function filtrerCotisationsAffichees() {
 
 function afficherCotisationsFiltrees(data) {
   const tbody = document.getElementById('cotisations-table');
-  const couleur = c => c.statut === 'complete' ? '#1a6b3c' : c.statut === 'livre' ? '#1565c0' : '#e65100';
+  const couleur = c => c.statut === 'complete' ? '#103d3a' : c.statut === 'livre' ? '#1565c0' : '#e65100';
   tbody.innerHTML = data.map(c => {
     const pct = Math.min(100, Math.round((c.montantCollecte / (c.montantObjectif||1)) * 100));
     const badgeClass = c.statut === 'complete' ? 'badge-green' : c.statut === 'livre' ? 'badge-blue' : 'badge-amber';
@@ -1380,7 +1397,7 @@ async function chargerLivraisons() {
   const data = await res.json();
   const livraisons = data.filter(c => c.statut === 'complete' || c.statut === 'livre');
   document.getElementById('total-livrees').textContent = data.filter(c=>c.statut==='livre').length;
-  const couleur = c => c.statut === 'livre' ? '#1565c0' : '#1a6b3c';
+  const couleur = c => c.statut === 'livre' ? '#1565c0' : '#103d3a';
   const tbody = document.getElementById('livraisons-table');
   tbody.innerHTML = livraisons.length ? livraisons.map(c =>
     '<tr><td><strong>' + (c.client?.nom||'?') + '</strong><br><small>' + (c.client?.telephone||'') + '</small></td>' +
@@ -1691,7 +1708,7 @@ async function chargerPaiements() {
   pVersements.forEach(v => { const m = v.modePaiement||'Autre'; modes[m] = (modes[m]||0) + (v.montant||0); });
   if (pCharts.modes) pCharts.modes.destroy();
   pCharts.modes = new Chart(document.getElementById('p-chartModes'), {
-    type:'doughnut', data:{ labels:Object.keys(modes)||['Aucun'], datasets:[{ data:Object.values(modes).length?Object.values(modes):[1], backgroundColor:['#1a6b3c','#1565c0','#e65100','#c8960c'], borderWidth:0 }] },
+    type:'doughnut', data:{ labels:Object.keys(modes)||['Aucun'], datasets:[{ data:Object.values(modes).length?Object.values(modes):[1], backgroundColor:['#103d3a','#1565c0','#e65100','#828906'], borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
   });
   const en_cours = pCotisations.filter(c=>c.statut==='en_cours').length;
@@ -1699,14 +1716,14 @@ async function chargerPaiements() {
   const livre = pCotisations.filter(c=>c.statut==='livre').length;
   if (pCharts.statuts) pCharts.statuts.destroy();
   pCharts.statuts = new Chart(document.getElementById('p-chartStatuts'), {
-    type:'doughnut', data:{ labels:['En cours','Complètes','Livrées'], datasets:[{ data:[en_cours,complete,livre], backgroundColor:['#1565c0','#1a6b3c','#c8960c'], borderWidth:0 }] },
+    type:'doughnut', data:{ labels:['En cours','Complètes','Livrées'], datasets:[{ data:[en_cours,complete,livre], backgroundColor:['#1565c0','#103d3a','#828906'], borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
   });
   const top = [...pCotisations].sort((a,b)=>(b.montantCollecte||0)-(a.montantCollecte||0)).slice(0,6);
   if (pCharts.top) pCharts.top.destroy();
   pCharts.top = new Chart(document.getElementById('p-chartTop'), {
     type:'bar', data:{ labels:top.map(c=>(c.client?.nom||'?')), datasets:[
-      { label:'Collecté', data:top.map(c=>c.montantCollecte||0), backgroundColor:'#1a6b3c', borderRadius:4 },
+      { label:'Collecté', data:top.map(c=>c.montantCollecte||0), backgroundColor:'#103d3a', borderRadius:4 },
       { label:'Objectif', data:top.map(c=>c.montantObjectif||0), backgroundColor:'rgba(200,150,12,0.3)', borderRadius:4 }
     ]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top', labels:{ font:{ size:10 } } } }, scales:{ x:{ ticks:{ font:{ size:10 } }, grid:{ display:false } }, y:{ ticks:{ font:{ size:10 }, callback:v=>(v/1000)+'k' } } } }
