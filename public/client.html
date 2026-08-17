@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#103d3a">
 <style>
@@ -251,6 +252,16 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
     <div id="messages-list" style="margin-top:14px;"></div>
   </div>
 
+  <div class="section-card" id="nav-scanner">
+    <div class="section-title">📷 Scanner un produit</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Scannez le QR code BIOSAVEUR TRACE™ imprimé sur l'étiquette de votre produit pour voir sa traçabilité complète (origine, alimentation, contrôle qualité...).</p>
+    <button class="btn btn-blue" style="width:100%;margin-bottom:12px;" onclick="toggleScannerProduit()" id="btn-scanner-produit">📷 Scanner un QR code produit</button>
+    <div id="zone-scanner-produit" style="display:none;margin-bottom:12px;">
+      <div id="qr-reader-produit" style="border-radius:12px;overflow:hidden;"></div>
+    </div>
+    <div id="resultat-scan-produit"></div>
+  </div>
+
 </div>
 
 <div class="bottom-nav">
@@ -258,6 +269,7 @@ header{background:var(--green);color:white;padding:0 20px;height:56px;display:fl
   <button onclick="allerA('nav-cotisations')"><span class="nav-icon">🐔</span>Cotisations</button>
   <button onclick="allerA('nav-parrainage')"><span class="nav-icon">🤝</span>Parrainage</button>
   <button onclick="allerA('nav-messages')"><span class="nav-icon">💬</span>Messages</button>
+  <button onclick="allerA('nav-scanner')"><span class="nav-icon">📷</span>Scanner</button>
 </div>
 
 <!-- QR Modal -->
@@ -1135,6 +1147,63 @@ function afficherQR() {
     ? `<img src="${monQRCode}" style="max-width:200px;border-radius:8px;">`
     : '<p style="color:#8fa896">QR code non disponible</p>';
   document.getElementById('modal-qr').classList.add('show');
+}
+
+let scannerProduitActif = null;
+const URL_TRACABILITE_PILOTAGE = 'https://biosaveur-pilotage.onrender.com/tracabilite-publique.html';
+
+function toggleScannerProduit() {
+  const zone = document.getElementById('zone-scanner-produit');
+  const btn = document.getElementById('btn-scanner-produit');
+  if (zone.style.display === 'none') {
+    zone.style.display = 'block';
+    btn.textContent = '✖ Fermer le scanner';
+    demarrerScannerProduit();
+  } else {
+    zone.style.display = 'none';
+    btn.textContent = '📷 Scanner un QR code produit';
+    arreterScannerProduit();
+  }
+}
+
+function demarrerScannerProduit() {
+  scannerProduitActif = new Html5Qrcode('qr-reader-produit');
+  scannerProduitActif.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 220 },
+    (texteDecoded) => {
+      traiterQRProduitScanne(texteDecoded);
+      toggleScannerProduit();
+    },
+    () => {}
+  ).catch(() => {
+    document.getElementById('resultat-scan-produit').innerHTML = '<div class="livraison-card" style="text-align:center;color:var(--text-muted);">❌ Impossible d\'accéder à la caméra. Vérifiez les autorisations de votre navigateur.</div>';
+  });
+}
+
+function arreterScannerProduit() {
+  if (scannerProduitActif) { scannerProduitActif.stop().catch(() => {}); scannerProduitActif = null; }
+}
+
+function traiterQRProduitScanne(texteDecoded) {
+  // Le QR BIOSAVEUR TRACE contient soit l'URL complète de la fiche, soit juste le code produit
+  // (ex: BSV-POL-ABA-20260815-001) — on gère les deux cas.
+  let urlDestination = null;
+  try {
+    const url = new URL(texteDecoded);
+    if (url.pathname.includes('tracabilite-publique')) urlDestination = texteDecoded;
+  } catch (err) { /* pas une URL valide, on tente le code brut ci-dessous */ }
+
+  if (!urlDestination && /^BSV-/i.test(texteDecoded.trim())) {
+    urlDestination = `${URL_TRACABILITE_PILOTAGE}?code=${encodeURIComponent(texteDecoded.trim())}`;
+  }
+
+  if (!urlDestination) {
+    document.getElementById('resultat-scan-produit').innerHTML = '<div class="livraison-card">❌ QR code non reconnu — ce n\'est pas un produit BIOSAVEUR TRACE.</div>';
+    return;
+  }
+  window.open(urlDestination, '_blank');
+  document.getElementById('resultat-scan-produit').innerHTML = '<div class="livraison-card" style="background:var(--green-light);text-align:center;">✅ Fiche de traçabilité ouverte dans un nouvel onglet.</div>';
 }
 
 chargerProfil();
